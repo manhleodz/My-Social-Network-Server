@@ -2,6 +2,6 @@ This is a project I am very passionate about. This is the backend of the My Soci
 
 The project is still in the initial stages, I hope to complete the project as best as possible
 
-Tech:
+Tech:  
 -Nodejs, ExpressJs, sequelize, socket.io
 -db: postgre

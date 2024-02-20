@@ -33,7 +33,7 @@
     "redis": "^4.6.12",
     "sequelize": "^6.33.0",
     "sequelize-cli": "^6.6.1",
-    "sharp": "^0.33.2",
+    "sharp": "^0.32.6",
     "sqlite3": "^5.1.6",
     "uuid": "^9.0.1"
   }

@@ -315,11 +315,28 @@ const makeNewPost = async (req, res, next) => {
                 const downloadURL = await getDownloadURL(snapshot.ref);
 
                 if (contentType.includes("image")) {
+                    let backgroundColor;
+                    try {
+                        await calculateAverageImageColor(files[0].buffer)
+                            .then(averageColor => {
+                                backgroundColor = `rgb(${averageColor.red}, ${averageColor.green}, ${averageColor.blue})`;
+                            })
+                            .catch(error => {
+                                res.status(400).json('Error calculating average color:', error);
+                            });
+                    } catch (err) {
+                        res.status(400).json({
+                            message: "Upload failed",
+                            error: err.message
+                        });
+                    }
+
                     listImages.push({
                         link: downloadURL,
                         type: 1,
                         UserId: UserId,
                         PostId: newPost.id,
+                        backgroundColor,
                         createdAt: dateTime,
                         updatedAt: dateTime
                     });
@@ -330,6 +347,7 @@ const makeNewPost = async (req, res, next) => {
                         UserId: UserId,
                         PostId: newPost.id,
                         createdAt: dateTime,
+                        backgroundColor: black,
                         updatedAt: dateTime
                     });
                 } else {
@@ -345,7 +363,7 @@ const makeNewPost = async (req, res, next) => {
             })
         }
     } catch (err) {
-        res.status(400).json({
+        res.status(400).json({ 
             message: "Upload failed",
             error: err.message
         });

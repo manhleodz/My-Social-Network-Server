@@ -11,7 +11,7 @@ const getAll = async (req, res, next) => {
     try {
 
         const list = await Story.findAll({
-            attributes: ['id', 'link', 'expires', 'public', 'seen', 'createdAt', 'updatedAt'],
+            attributes: ['id', 'link', 'expires', 'public', 'seen', 'createdAt', 'updatedAt', 'backgroundColor'],
             include: [
                 {
                     attributes: ['id', 'nickname', 'username', 'avatar'],
