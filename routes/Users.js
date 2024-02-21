@@ -64,7 +64,7 @@ router.get("/all/users", async (req, res) => {
 router.put("/changeinfo", validateToken, updateUserProfile);
 
 // get owner profile by id
-router.get("/user/profile", validateToken, refreshStateUser);
+router.get("/user/refresh", validateToken, refreshStateUser);
 
 // update avatar
 router.put("/upload-avatar", async (req, res) => {

@@ -43,7 +43,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         background: {
             type: DataTypes.TEXT,
-            defaultValue: "https://firebasestorage.googleapis.com/v0/b/my-social-network-815dc.appspot.com/o/images%2F190057688_349127073238727_3602714994290916530_n.jpge1613d83-fdb8-4865-9d2c-62386a80bfed?alt=media&token=6f1cabd1-73f7-4a0e-a5e7-aed1117d428f"
+            defaultValue: "https://firebasestorage.googleapis.com/v0/b/my-social-network-815dc.appspot.com/o/posts%2F190057688_349127073238727_3602714994290916530_n.jpg_2024-2-16%2018%3A1%3A32_50271d1e-254e-404e-982e-aee86f243293?alt=media&token=bdca74f4-4c2a-4e83-aac7-625d64dffd27"
         },
         address: {
             type: DataTypes.TEXT,

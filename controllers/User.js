@@ -20,14 +20,17 @@ const signup = async (req, res) => {
         })
 
         if (duplication == null) {
-            bcrypt.hash(password, 10).then((hash) => {
-                Users.create({
+            let id;
+            bcrypt.hash(password, 10).then(async (hash) => {
+                const newAccount = await Users.create({
                     password: hash,
                     email: email,
-                })
+                });
+
+                id = newAccount.id;
             }).then((e) => {
                 const accessToken = sign(
-                    { email: email },
+                    { email: email, id: id },
                     process.env.SECRET_KEY
                 )
                 res.status(200).json(accessToken);
@@ -50,7 +53,7 @@ const makeInfo = async (req, res) => {
         const data = req.body;
         data.confirm = 1;
         const username = data.username;
-        const email = req.user.email;
+        const email = req.user.email.trim();
 
         const duplication = await Users.findAll({
             where: {
@@ -64,7 +67,7 @@ const makeInfo = async (req, res) => {
         if (duplication.length === 1) {
             await Users.update(data, { where: { email: email } }).then(e => {
                 const accessToken = sign(
-                    { username: username, id: duplication.id, confirm: 1 },
+                    { username, id: duplication[0].id, confirm: 1, email },
                     process.env.SECRET_KEY
                 )
                 res.status(200).json({
@@ -80,14 +83,14 @@ const makeInfo = async (req, res) => {
             })
         } else {
             res.status(400).json({
-                message: "Tên đăng nhập đã tồn tại"
+                error: "Tên đăng nhập đã tồn tại"
             });
         }
 
     } catch (error) {
         res.status(400).json({
             message: "Error",
-            message: error.message
+            error: error.message
         });
     }
 }

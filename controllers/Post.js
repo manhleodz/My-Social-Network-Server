@@ -12,7 +12,7 @@ const getPost = async (req, res, next) => {
         const page = (Number)(req.query.page);
         const userId = req.user.id;
         var listOfPosts = await Posts.findAll({
-            order: [['id', 'DESC']],
+            order: [['updatedAt', 'DESC']],
             include: [{
                 attributes: ['username', 'nickname', 'avatar',],
                 model: Users
