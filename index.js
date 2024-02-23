@@ -21,12 +21,12 @@ const apiLimiter = rateLimit({
 
 const app = express();
 app.set('trust proxy', (ip) => {
-  if (ip === 'http://localhost:3040' || ip === 'https://my-social-network-umber.vercel.app') return true // trusted IPs
+  if (ip === 'http://localhost:3040' || ip === 'https://my-social-network-umber.vercel.app') return true 
   else return false
 })
+
 app.use(express.json());
 app.use(cors());
-// app.use(fileUpload());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
   extended: true

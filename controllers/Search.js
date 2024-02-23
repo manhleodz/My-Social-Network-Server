@@ -1,10 +1,10 @@
-const { Search, Users } = require('../models');
+const { Search, Users, Media, Posts, Likes } = require('../models');
 const Sequelize = require('sequelize');
 require('dotenv').config();
-const util = require('util');
 const op = Sequelize.Op;
 
 const Redis = require('redis');
+const { list } = require('firebase/storage');
 
 const redisClient = Redis.createClient({
     password: process.env.REDIS_PASSWORD,
@@ -63,30 +63,6 @@ const newSearch = async (req, res) => {
     }
 };
 
-function removeAccents(str) {
-    var AccentsMap = [
-        "aàảãáạăằẳẵắặâầẩẫấậ",
-        "AÀẢÃÁẠĂẰẲẴẮẶÂẦẨẪẤẬ",
-        "dđ", "DĐ",
-        "eèẻẽéẹêềểễếệ",
-        "EÈẺẼÉẸÊỀỂỄẾỆ",
-        "iìỉĩíị",
-        "IÌỈĨÍỊ",
-        "oòỏõóọôồổỗốộơờởỡớợ",
-        "OÒỎÕÓỌÔỒỔỖỐỘƠỜỞỠỚỢ",
-        "uùủũúụưừửữứự",
-        "UÙỦŨÚỤƯỪỬỮỨỰ",
-        "yỳỷỹýỵ",
-        "YỲỶỸÝỴ"
-    ];
-    for (var i = 0; i < AccentsMap.length; i++) {
-        var re = new RegExp('[' + AccentsMap[i].substring(1) + ']', 'g');
-        var char = AccentsMap[i][0];
-        str = str.replace(re, char);
-    }
-    return str;
-};
-
 const topResult = async (req, res) => {
 
     try {
@@ -110,7 +86,10 @@ const topResult = async (req, res) => {
             } else {
                 const newList = await Users.sequelize.query(
                     `
-                    SELECT username, avatar, nickname FROM "Users" WHERE lower(unaccent(nickname)) ILIKE lower(unaccent('%${search}%')) ORDER BY "Users"."id" DESC LIMIT 6;
+                    SELECT
+                        id, username, avatar, nickname
+                    FROM "Users" 
+                    WHERE lower(unaccent(nickname)) ILIKE lower(unaccent('%${search}%')) ORDER BY "Users"."id" DESC LIMIT 6;
                     `
                 )
 
@@ -140,73 +119,143 @@ const result = async (req, res) => {
     try {
         const search = req.query.search;
         const page = req.query.page;
+        const userId = req.user.id;
 
         if (search === undefined || page === undefined || search.length === 0 || page.length === 0 || search.trim().length === 0) {
             res.status(400).json({
                 message: "What are you doing, mtf?"
             });
         } else {
-            let listUser = await redisClient.get(`search=${search}&page=${page}`);
+            let result = await redisClient.get(`search=${search}&page=${page}`);
 
-            if (listUser && listUser.length > 0) {
-                const data = JSON.parse(listUser);
-
-                if (listUser.length > 6) {
-                    res.status(200).json({
-                        search,
-                        page: (Number)(page) + 1,
-                        hasMore: true,
-                        data
-                    });
-                } else {
-                    res.status(200).json({
-                        search,
-                        page: (Number)(page) + 1,
-                        hasMore: false,
-                        data
-                    });
-                }
+            if (result && result.length > 0) {
+                const data = JSON.parse(result);
+                res.status(200).json({
+                    search,
+                    page: (Number)(page),
+                    data
+                });
 
             } else {
 
-                const newList = await Users.sequelize.query(
-                    `
-                    SELECT 
-                        "Posts".*, 
-                         "User"."id" AS "User.id", "User"."username" AS "User.username", "User"."nickname" AS "User.nickname", "User"."avatar" AS "User.avatar",
-                        "Images"."link" AS "Images.link", "Images"."id" AS "Images.id",
-                        "Videos"."link" AS "Videos.link", "Videos"."id" AS "Videos.id"
-                    FROM (
-                        SELECT 
-                            "Posts"."id", "Posts"."postText", "Posts"."public", "Posts"."likeNumber", "Posts"."commentNumber", "Posts"."sharedNumber", "Posts"."createdAt", "Posts"."updatedAt", "Posts"."UserId" 
-                        FROM "Posts" AS "Posts" WHERE lower(unaccent("Posts"."postText")) = lower(unaccent('%${search}%')) ORDER BY "Posts"."id" DESC LIMIT 4 OFFSET ${page * 4 + 4}) AS "Posts"
-                        LEFT OUTER JOIN "Users" AS "User" ON "Posts"."UserId" = "User"."id"
-                        LEFT OUTER JOIN "Images" AS "Images" ON "Posts"."id" = "Images"."PostId" 
-                        LEFT OUTER JOIN "Videos" AS "Videos" ON "Posts"."id" = "Videos"."PostId"
-                        ORDER BY "Posts"."id" DESC;
-                    `
-                )
-                const data = newList[0];
-                if (data.length > 0) {
-                    await redisClient.SETEX(`search=${search}&page=${page}`, DEFAULT_EXPIRATION, JSON.stringify(data));
+                let listUser = await redisClient.get(`top/search=${search}`);
 
-                    if (data.length > 6) {
+                if (listUser) {
+
+                    listUser = JSON.parse(listUser);
+
+                    const listId = listUser.map(user => {
+                        return user.id;
+                    });
+
+                    let stringId = listId[0];
+                    for (let i = 1; i < listId.length; i++) {
+                        stringId += `,${listId[i]}`;
+                    }
+
+                    result = await Posts.findAll({
+                        where: Sequelize.literal(`lower(unaccent("postText")) ILIKE lower(unaccent(:searchValue)) OR "UserId" IN (${stringId})`),
+                        replacements: { searchValue: `%${search}%` },
+                        order: [['updatedAt', 'DESC']],
+                        include: [{
+                            attributes: ['username', 'nickname', 'avatar',],
+                            model: Users
+                        }, {
+                            attributes: ['link', 'id', 'type', 'backgroundColor'],
+                            model: Media
+                        }],
+                        offset: page * 5,
+                        limit: 5,
+                    })
+
+                    const ids = await result.map((post) => { return post.id });
+                    const likes = await Likes.findAll({
+                        attributes: ['PostId'],
+                        where: {
+                            PostId: ids,
+                            UserId: userId
+                        }
+                    });
+
+                    for (let i = 0; i < result.length; i++) {
+                        if (likes.find(like => like.PostId === result[i].id)) {
+                            result[i]['isLiked'] = true;
+                        } else {
+                            result[i]['isLiked'] = false;
+                        }
+                    }
+
+                    var data = [];
+                    for (let i = 0; i < result.length; i++) {
+                        data.push({
+                            Post: result[i],
+                            isLiked: result[i].isLiked
+                        })
+                    }
+
+                    if (data.length > 0) {
+                        await redisClient.SETEX(`search=${search}&page=${page}`, DEFAULT_EXPIRATION, JSON.stringify(data));
+
                         res.status(200).json({
                             search,
-                            page: (Number)(page) + 1,
-                            hasMore: true,
+                            page: (Number)(page),
                             data
                         });
                     } else {
+                        res.status(204).json("There are no search results");
+                    }
+                } else {
+                    result = await Posts.findAll({
+                        where: Sequelize.literal(`lower(unaccent("postText")) ILIKE lower(unaccent(:searchValue))`),
+                        replacements: { searchValue: `%${search}%` },
+                        order: [['updatedAt', 'DESC']],
+                        include: [{
+                            attributes: ['username', 'nickname', 'avatar',],
+                            model: Users
+                        }, {
+                            attributes: ['link', 'id', 'type', 'backgroundColor'],
+                            model: Media
+                        }],
+                        offset: page * 5,
+                        limit: 5,
+                    })
+
+                    const ids = await result.map((post) => { return post.id });
+                    const likes = await Likes.findAll({
+                        attributes: ['PostId'],
+                        where: {
+                            PostId: ids,
+                            UserId: userId
+                        }
+                    });
+
+                    for (let i = 0; i < result.length; i++) {
+                        if (likes.find(like => like.PostId === result[i].id)) {
+                            result[i]['isLiked'] = true;
+                        } else {
+                            result[i]['isLiked'] = false;
+                        }
+                    }
+
+                    var data = [];
+                    for (let i = 0; i < result.length; i++) {
+                        data.push({
+                            Post: result[i],
+                            isLiked: result[i].isLiked
+                        })
+                    }
+                    if (data.length > 0) {
+                        await redisClient.SETEX(`search=${search}&page=${page}`, DEFAULT_EXPIRATION, JSON.stringify(data));
+
                         res.status(200).json({
                             search,
                             page: (Number)(page) + 1,
-                            hasMore: false,
                             data
                         });
+
+                    } else {
+                        res.status(204).json("There are no search results");
                     }
-                } else {
-                    res.status(204).json("There are no search results");
                 }
             }
         }
