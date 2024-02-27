@@ -1,7 +1,7 @@
 const { Search, Users, Media, Posts, Likes } = require('../models');
 const Sequelize = require('sequelize');
-require('dotenv').config();
 const op = Sequelize.Op;
+require('dotenv').config();
 
 const Redis = require('redis');
 const { list } = require('firebase/storage');

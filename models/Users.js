@@ -91,6 +91,11 @@ module.exports = (sequelize, DataTypes) => {
         })
         Users.hasMany(models.Inbox, {
             onDelete: "cascade",
+            foreignKey: 'sender',
+        });
+        Users.hasMany(models.Inbox, {
+            onDelete: "cascade",
+            foreignKey: 'receiver',
         });
         Users.hasMany(models.Search, {
             onDelete: "cascade",

@@ -113,22 +113,31 @@ const deleteFriend = async (req, res) => {
     }
 }
 
+const isIncluded = (list, id) => {
+    for (let obj of list)
+        if (obj.User1 === id || obj.User2 === id)
+            return obj.id;
+
+    return false
+}
+
 const getListFriend = async (req, res) => {
     try {
         const id = req.user.id;
 
         const list = await UserRela.findAll({
-            attributes: ['User1', 'User2'],
+            attributes: ['id', 'User1', 'User2'],
             where: {
                 status: 1,
                 [Op.or]: [
                     { User1: id },
                     { User2: id }
                 ]
-            }
+            },
+            order: [['id', 'DESC']],
         });
 
-        const friendIds = list.map(fr => {
+        let friendIds = list.map(fr => {
             if (fr.User1 === id)
                 return fr.User2;
             else
@@ -137,10 +146,26 @@ const getListFriend = async (req, res) => {
 
         const friends = await Users.findAll({
             attributes: ['id', 'nickname', 'username', 'avatar', 'online'],
-            where: { id: friendIds }
+            where: { id: friendIds },
+            order: [['id', 'ASC']]
         })
 
-        res.status(200).json(friends);
+        let result = [];
+        for (let i = 0; i < list.length; i++) {
+
+            const including = isIncluded(list, friends[i].id);
+            if (including)
+                result.push({
+                    "relationshipId": including,
+                    "id": friends[i].id,
+                    "nickname": friends[i].nickname,
+                    "username": friends[i].username,
+                    "avatar": friends[i].avatar,
+                    "online": friends[i].online,
+                });
+        }
+
+        res.status(200).json(result);
     } catch (err) {
         res.status(400).json({
             message: "Lỗi server ông ơi",

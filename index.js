@@ -30,7 +30,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
   extended: true
-}));
+})); 
 
 const db = require('./models');
 
@@ -69,9 +69,6 @@ app.use("/api/images", imageRouter);
 
 const searchRouter = require("./routes/Search");
 app.use("/api/search", searchRouter);
-
-const videoRouter = require("./routes/Videos");
-app.use("/api/videos", videoRouter);
 
 db.sequelize.sync().then(() => {
   app.listen(port, () => {
