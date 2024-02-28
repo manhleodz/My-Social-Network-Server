@@ -9,7 +9,7 @@ const port = process.env.PORT;
 // rate limit
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minutes
-  max: 30,
+  max: 50,
   message: 'Too many connection',
   handler: (request, response, next, options) => {
     if (request.rateLimit.used === request.rateLimit.limit + 1) {

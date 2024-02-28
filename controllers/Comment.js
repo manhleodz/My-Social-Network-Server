@@ -10,7 +10,8 @@ const getCommentsByPost = async (req, res, next) => {
             include: [{
                 attributes: ['id', 'username', 'nickname', 'avatar'],
                 model: Users
-            }]
+            }],
+            limit: 10
         });
         res.status(200).json(comments);
     } catch (err) {
