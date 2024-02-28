@@ -1,4 +1,4 @@
-const { Posts, Users, Media, Likes } = require("../models");
+const { Posts, Users, Media, Likes, Comments } = require("../models");
 const Sequelize = require('sequelize');
 const { getStorage, ref, uploadBytesResumable, getDownloadURL } = require('firebase/storage');
 const { auth } = require('../config/firebase.config');
@@ -363,7 +363,7 @@ const makeNewPost = async (req, res, next) => {
             })
         }
     } catch (err) {
-        res.status(400).json({ 
+        res.status(400).json({
             message: "Upload failed",
             error: err.message
         });
@@ -421,6 +421,20 @@ const updateLikeNum = async (req, res) => {
     }
 };
 
+const updateCommentNumber = async (req, res) => {
+    try {
+        const PostId = req.params.postId;
+        const amount = await Comments.count({
+            where: { PostId: PostId }
+        })
+
+        Posts.update({ commentNumber: amount }, { where: { id: PostId } })
+        res.status(200).json("success");
+    } catch (err) {
+        res.status(400).json("Server error");
+    }
+};
+
 const giveCurrentDateTime = () => {
     const today = new Date();
     const date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
@@ -436,5 +450,6 @@ module.exports = {
     makeNewPost,
     deletePost,
     updatePost,
-    updateLikeNum
+    updateLikeNum,
+    updateCommentNumber
 }

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { validateToken } = require('../middlewares/AuthMiddleware');
-const { getPost, getPostById, getPostByUser, makeNewPost, deletePost, updatePost, updateLikeNum } = require('../controllers/Post');
+const { getPost, getPostById, getPostByUser, makeNewPost, deletePost, updatePost, updateLikeNum, updateCommentNumber } = require('../controllers/Post');
 const uploadMiddleware = require('../middlewares/multer');
 
 // get all posts
@@ -13,6 +13,9 @@ router.get("/:id", validateToken, getPostById);
 //update like num
 router.post("/like/:postId", updateLikeNum);
 
+//update like num
+router.post("/comment/:postId", updateCommentNumber);
+
 // make new post
 router.post("/", validateToken, uploadMiddleware, makeNewPost);
 
@@ -23,6 +26,6 @@ router.put("/:id", validateToken, updatePost);
 router.delete("/:postId", validateToken, deletePost);
 
 // get user 's posts
-router.get("/profile/user",validateToken, getPostByUser);
+router.get("/profile/user", validateToken, getPostByUser);
 
 module.exports = router;

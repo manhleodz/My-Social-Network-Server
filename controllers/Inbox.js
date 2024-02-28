@@ -17,6 +17,8 @@ const getMessage = async (req, res) => {
                     { receiver: friend, sender: userId },
                 ]
             },
+            limit: 20,
+            offset: 0
         })
 
         res.status(200).json({
@@ -39,7 +41,6 @@ const sendMessaeg = async (req, res) => {
 
         data.sender = sender;
 
-        console.log(data);
         const newMessage = await Inbox.create(data);
 
         res.status(200).json({
