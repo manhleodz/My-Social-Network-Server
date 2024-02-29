@@ -10,20 +10,20 @@ const getMessage = async (req, res) => {
         const userId = req.user.id;
 
         const list = await Inbox.findAll({
-            attributes: ['id','sender', 'message', 'room', 'createdAt'],
+            attributes: ['id', 'sender', 'message', 'room', 'createdAt'],
+            order: [['createdAt', 'DESC']],
+            limit: 20,
             where: {
                 [op.or]: [
                     { receiver: userId, sender: friend },
                     { receiver: friend, sender: userId },
                 ]
             },
-            limit: 20,
-            offset: 0
         })
 
         res.status(200).json({
             message: "Lấy thành công ông ơi",
-            data: list,
+            data: list.reverse(),
         })
     } catch (err) {
         res.status(400).json({
