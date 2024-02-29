@@ -11,19 +11,34 @@ const getAll = async (req, res, next) => {
     try {
 
         const page = (Number)(req.query.page);
-        const list = await Story.findAll({
-            attributes: ['id', 'link', 'expires', 'public', 'seen', 'createdAt', 'updatedAt', 'backgroundColor'],
-            include: [
-                {
-                    attributes: ['id', 'nickname', 'username', 'avatar'],
-                    model: Users
-                }
-            ],
-            limit: 5,
-            offset: page * 5,
-            order: [['id', 'DESC']],
-        });
-        res.status(200).json(list);
+        if (page) {
+            const list = await Story.findAll({
+                attributes: ['id', 'link', 'expires', 'public', 'seen', 'createdAt', 'updatedAt', 'backgroundColor'],
+                include: [
+                    {
+                        attributes: ['id', 'nickname', 'username', 'avatar'],
+                        model: Users
+                    }
+                ],
+                limit: 5,
+                offset: page * 5,
+                order: [['id', 'DESC']],
+            });
+            res.status(200).json(list);
+        } else {
+            const list = await Story.findAll({
+                attributes: ['id', 'link', 'expires', 'public', 'seen', 'createdAt', 'updatedAt', 'backgroundColor'],
+                include: [
+                    {
+                        attributes: ['id', 'nickname', 'username', 'avatar'],
+                        model: Users
+                    }
+                ],
+                limit: 5,
+                order: [['id', 'DESC']],
+            });
+            res.status(200).json(list);
+        }
     } catch (err) {
         res.status(400).json({
             message: "Lỗi server",
