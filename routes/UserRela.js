@@ -4,13 +4,16 @@ const { validateToken } = require('../middlewares/AuthMiddleware');
 const { UserRela } = require('../models');
 const { Users } = require("../models");
 const { Op } = require("sequelize");
-const { addFriends, deleteFriend, getListFriend, getFriendRequest } = require("../controllers/UserRela");
+const { addFriends, deleteFriend, getListFriend, getFriendRequest, getNineFriends } = require("../controllers/UserRela");
 
 // get list friend
 router.get("/", validateToken, getListFriend);
 
 //get list friend request
 router.get("/request", validateToken, getFriendRequest);
+
+//get list friend of 1 profile
+router.get("/profile", validateToken, getNineFriends);
 
 // follow
 router.post("/addFriend", validateToken, addFriends);

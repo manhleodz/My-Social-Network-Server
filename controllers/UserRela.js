@@ -174,6 +174,64 @@ const getListFriend = async (req, res) => {
     }
 }
 
+const getNineFriends = async (req, res) => {
+    try {
+        const id = (Number)(req.query.id);
+
+        const list = await UserRela.findAll({
+            attributes: ['id', 'User1', 'User2'],
+            where: {
+                status: 1,
+                [Op.or]: [
+                    { User1: id },
+                    { User2: id }
+                ]
+            },
+            limit: 9,
+            order: [['id', 'DESC']],
+        });
+
+        let friendIds = list.map(fr => {
+            if (fr.User1 === id)
+                return fr.User2;
+            else
+                return fr.User1;
+        })
+
+        const friends = await Users.findAll({
+            attributes: ['id', 'nickname', 'username', 'avatar', 'online'],
+            where: { id: friendIds },
+            order: [['id', 'ASC']]
+        })
+
+        let result = [];
+        for (let i = 0; i < list.length; i++) {
+
+            const including = isIncluded(list, friends[i].id);
+            if (including)
+                result.push({
+                    "relationshipId": including,
+                    "id": friends[i].id,
+                    "nickname": friends[i].nickname,
+                    "username": friends[i].username,
+                    "avatar": friends[i].avatar,
+                    "online": friends[i].online,
+                });
+        }
+
+        res.status(200).json({
+            message: "Get successfully",
+            data: result
+        })
+
+    } catch (err) {
+        res.status(400).json({
+            message: "Lỗi server ông ơi",
+            error: err.message
+        })
+    }
+}
+
 const getFriendRequest = async (req, res) => {
     try {
         const id = req.user.id;
@@ -208,5 +266,6 @@ module.exports = {
     addFriends,
     deleteFriend,
     getListFriend,
-    getFriendRequest
+    getFriendRequest,
+    getNineFriends
 }

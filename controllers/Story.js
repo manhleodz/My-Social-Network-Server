@@ -122,12 +122,23 @@ const deleteById = async (req, res) => {
     try {
 
         const id = req.params.id;
-        await Story.destroy({
-            where: {
-                id: id,
+        const userId = req.user.id;
+        const checker = await Story.findByPk(id);
+
+        if (checker) {
+            if (checker.UserId === userId) {
+                await Story.destroy({
+                    where: {
+                        id: id,
+                    }
+                })
+                res.status(200).json({ message: "Deleted successfully" });
+            } else {
+                res.status(400).json({ message: "Bạn ko có quyền xóa tin này" });
             }
-        })
-        res.status(200).json("success");
+        } else {
+            res.status(404).json({ message: "Không tìm thấy tin" });
+        }
 
     } catch (err) {
         res.status(400).json(err);
@@ -200,9 +211,27 @@ const post = async (req, res) => {
                     UserId: UserId,
                     backgroundColor
                 });
+
+                const User = await Users.findByPk(UserId);
+
                 res.status(200).json({
                     message: "Upload Successfully",
-                    data: story
+                    data: {
+                        "id": story.id,
+                        "link": story.link,
+                        "expires": story.expires,
+                        "public": story.public,
+                        "seen": `${UserId}`,
+                        "createdAt": story.createdAt,
+                        "updatedAt": story.updatedAt,
+                        "backgroundColor": backgroundColor,
+                        "User": {
+                            "id": UserId,
+                            "nickname": User.nickname,
+                            "username": User.username,
+                            "avatar": User.avatar
+                        }
+                    }
                 });
 
             } else if (contentType.includes("video")) {

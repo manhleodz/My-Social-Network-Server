@@ -285,6 +285,7 @@ const getProfile = async (req, res) => {
             } else {
                 isFriend = 0;
             }
+
             res.status(200).json({
                 message: "Get profile successfully",
                 profile: profile,
