@@ -21,6 +21,16 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             defaultValue: 0
         },
+        createdAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.fn('now'),
+        },
+        updatedAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.fn('now'),
+        }
     }, {
         charset: 'utf8mb4',
         collate: 'utf8mb4_unicode_ci'
@@ -29,26 +39,33 @@ module.exports = (sequelize, DataTypes) => {
     Posts.associate = (models) => {
         Posts.hasMany(models.Comments, {
             onDelete: "cascade",
+            foreignKey: "PostId",
         });
 
         Posts.hasMany(models.Likes, {
             onDelete: "cascade",
+            foreignKey: "PostId",
         });
 
         Posts.hasMany(models.Media, {
             onDelete: "cascade",
+            foreignKey: "PostId",
         });
 
         Posts.hasMany(models.Saved, {
             onDelete: "cascade",
+            foreignKey: "PostId",
+
         });
 
         Posts.hasMany(models.Shared, {
             onDelete: "cascade",
+            foreignKey: "PostId",
         })
 
         Posts.belongsTo(models.Users, {
             onDelete: "cascade",
+            foreignKey: "UserId",
         })
     };
 

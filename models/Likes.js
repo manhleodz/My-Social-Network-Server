@@ -1,5 +1,16 @@
 module.exports = (sequelize, DataTypes) => {
     const Likes = sequelize.define("Likes", {
+
+        createdAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.fn('now'),
+        },
+        updatedAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.fn('now'),
+        }
     });
 
     Likes.associate = (models) => {

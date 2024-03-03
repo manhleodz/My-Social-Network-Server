@@ -23,6 +23,16 @@ module.exports = (sequelize, DataTypes) => {
         seen: {
             type: DataTypes.STRING,
             allowNull: true,
+        },
+        createdAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.fn('now'),
+        },
+        updatedAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.fn('now'),
         }
     });
 

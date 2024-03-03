@@ -1,7 +1,11 @@
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
 const { Op } = require("sequelize");
-
+const { getStorage, ref, uploadBytesResumable, getDownloadURL } = require('firebase/storage');
+const { auth } = require('../config/firebase.config');
+const storage = getStorage();
+const uuid = require('uuid');
+const sharp = require('sharp');
 const { Users, UserRela } = require("../models");
 const { sign } = require('jsonwebtoken');
 require('dotenv').config();
@@ -252,7 +256,7 @@ const getProfile = async (req, res) => {
         const userId = req.user.id;
         if (isNaN(info)) {
             const profile = await Users.findOne({
-                attributes: ['id', 'username', 'nickname', 'avatar', 'gender', 'background', 'address', 'story', 'workAt', 'studyAt', 'favorites', 'birthday', 'online'],
+                attributes: ['id', 'username', 'nickname', 'avatar', 'gender', 'background', 'backgroundColor', 'address', 'story', 'workAt', 'studyAt', 'favorites', 'birthday', 'online'],
                 where: { username: info }
             })
 
@@ -376,9 +380,93 @@ const refreshStateUser = async (req, res) => {
             res.status(404).json("404 Not Found");
         }
     } catch (err) {
-        res.status(400).json(err);
+        res.status(400).json({
+            message: "error",
+            error: err.message
+        });
     }
 }
+
+const updateAvatarAndBackground = async (req, res) => {
+
+    try {
+        const files = req.files;
+        const { type } = req.body;
+        const userId = req.user.id;
+
+        if (!type || files.length > 1 || files.length === 0) throw new Error("Không xác định được yêu cầu!");
+
+        const uuid4 = uuid.v4()
+
+        const dateTime = giveCurrentDateTime();
+
+        const storageRef = ref(storage, `posts/${files[0].originalname + "_" + dateTime}_${uuid4}`);
+
+        const contentType = (String)(files[0].mimetype);
+
+        const metadata = {
+            contentType: contentType,
+        };
+
+        const snapshot = await uploadBytesResumable(storageRef, files[0].buffer, metadata);
+
+        const downloadURL = await getDownloadURL(snapshot.ref);
+
+
+        if (type === "avatar") {
+
+            await Users.update({
+                avatar: downloadURL,
+            })
+        } else if (type === "background") {
+
+            let backgroundColor;
+            await calculateAverageImageColor(files[0].buffer)
+                .then(averageColor => {
+                    backgroundColor = `rgb(${averageColor.red}, ${averageColor.green}, ${averageColor.blue})`;
+                })
+                .catch(error => {
+                    throw new Error('Error calculating average color:' + error.message);
+                });
+
+            await Users.update({
+                background: downloadURL,
+                backgroundColor
+            }, {where: {id : userId}})
+        } else throw new Error("Không xác định được yêu cầu!");
+    } catch (err) {
+        res.status(400).json({
+            message: "error",
+            error: err.message
+        });
+    }
+};
+
+async function calculateAverageImageColor(imageBuffer) {
+    try {
+        // Resize the image to 1x1 pixel to get the average color
+        const { data } = await sharp(imageBuffer)
+            .resize(1, 1, { fit: 'cover' })
+            .raw()
+            .toBuffer({ resolveWithObject: true });
+
+        // Convert the RGB values to integers
+        const [red, green, blue] = data;
+
+        return { red, green, blue };
+    } catch (error) {
+        console.error('Failed to calculate average color:', error);
+    }
+};
+
+const giveCurrentDateTime = () => {
+    const today = new Date();
+    const date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
+    const time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+    const dateTime = date + ' ' + time;
+    return dateTime;
+}
+
 
 module.exports = {
     signup,
@@ -387,5 +475,6 @@ module.exports = {
     makeInfo,
     getProfile,
     updateUserProfile,
-    refreshStateUser
+    refreshStateUser,
+    updateAvatarAndBackground
 }

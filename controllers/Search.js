@@ -87,7 +87,7 @@ const topResult = async (req, res) => {
                 const newList = await Users.sequelize.query(
                     `
                     SELECT
-                        id, username, avatar, nickname
+                        id, username, avatar, nickname, "Users"."createdAt", "Users"."updatedAt"
                     FROM "Users" 
                     WHERE lower(unaccent(nickname)) ILIKE lower(unaccent('%${search}%')) ORDER BY "Users"."id" DESC LIMIT 6;
                     `

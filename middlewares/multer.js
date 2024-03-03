@@ -19,6 +19,11 @@ const uploadMiddleware = (req, res, next) => {
         const files = req.files;
         const errors = [];
 
+        if (!files)
+            return res.status(400).json({
+                message: "No files were uploaded"
+            });
+
         // Validate file types and sizes
         files.forEach((file) => {
             const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'video/mp4'];

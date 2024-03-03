@@ -1,4 +1,4 @@
-require('dotenv').config(); 
+require('dotenv').config();
 const fs = require('fs');
 module.exports = {
   "development": {
@@ -7,7 +7,11 @@ module.exports = {
     "database": process.env.DB_DATABASE,
     "host": process.env.DB_HOST,
     "dialect": "postgres",
-    "timezone": "+07:00"
+    "timezone": "+7:00",
+    "define": {
+      "freezeTableName": true,
+      timestamps: false,
+    }
   },
   "test": {
     "username": "root",
@@ -22,6 +26,10 @@ module.exports = {
     "database": process.env.DB_DATABASE,
     "host": process.env.DB_HOST,
     "dialect": "postgres",
-    "timezone": "+07:00"
+    "timezone": "+7:00",
+    "define": {
+      "freezeTableName": true,
+      timestamps: false,
+    }
   }
 };

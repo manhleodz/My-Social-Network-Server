@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
     const ChannelMembers = sequelize.define("ChannelMembers", {
-        channelId: {
+        ChannelId: {
             type: DataTypes.INTEGER,
             allowNull: false
         },
@@ -12,9 +12,19 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: false
         },
-        userId: {
+        UserId: {
             type: DataTypes.INTEGER,
             allowNull: false
+        },
+        createdAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.fn('now'),
+        },
+        updatedAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.fn('now'),
         }
     }, {
         charset: 'utf8mb4',
@@ -24,12 +34,12 @@ module.exports = (sequelize, DataTypes) => {
     ChannelMembers.associate = (models) => {
         ChannelMembers.belongsTo(models.Users, {
             onDelete: "cascade",
-            foreignKey: "userId"
+            foreignKey: "UserId"
         });
 
         ChannelMembers.belongsTo(models.Channels, {
             onDelete: "cascade",
-            foreignKey: "channelId"
+            foreignKey: "ChannelId"
         });
     };
 

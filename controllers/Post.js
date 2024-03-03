@@ -5,6 +5,7 @@ const { auth } = require('../config/firebase.config');
 const storage = getStorage();
 const uuid = require('uuid');
 const sharp = require('sharp');
+const Op = Sequelize.Op;
 
 const getPost = async (req, res, next) => {
 
@@ -12,6 +13,7 @@ const getPost = async (req, res, next) => {
         const page = (Number)(req.query.page);
         const userId = req.user.id;
         var listOfPosts = await Posts.findAll({
+            where: { public: true },
             order: [['updatedAt', 'DESC']],
             include: [{
                 attributes: ['username', 'nickname', 'avatar',],
@@ -120,7 +122,7 @@ const getPostByUser = async (req, res, next) => {
         const page = (Number)(req.query.page);
 
         var listOfPosts = await Posts.findAll({
-            where: { UserId: userId1 },
+            where: { UserId: userId1, public: true },
             order: [['id', 'DESC']],
             include: [{
                 attributes: ['username', 'nickname', 'avatar',],
@@ -216,7 +218,7 @@ const makeNewPost = async (req, res, next) => {
 
             res.status(200).json({
                 message: "Upload Successfully",
-                newPost: newPost
+                newPost: public ? newPost : {}
             })
         }
         else if (files.length === 1) {
@@ -282,7 +284,7 @@ const makeNewPost = async (req, res, next) => {
 
             res.status(200).json({
                 message: "Upload Successfully",
-                newPost: newPost
+                newPost: public ? newPost : {}
             })
         }
         else if (files.length > 1) {
@@ -359,7 +361,7 @@ const makeNewPost = async (req, res, next) => {
 
             res.status(200).json({
                 message: "Upload Successfully",
-                newPost: newPost
+                newPost: public ? newPost : {}
             })
         }
     } catch (err) {

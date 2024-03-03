@@ -13,6 +13,16 @@ module.exports = (sequelize, DataTypes) => {
         },
         room: {
             type: DataTypes.STRING,
+        },
+        createdAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.fn('now'),
+        },
+        updatedAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.fn('now'),
         }
     }, {
         charset: 'utf8mb4',

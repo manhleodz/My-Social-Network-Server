@@ -7,6 +7,16 @@ module.exports = (sequelize, DataTypes) => {
         likeNumber: {
             type: DataTypes.INTEGER,
             defaultValue: 0
+        },
+        createdAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.fn('now'),
+        },
+        updatedAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.fn('now'),
         }
     }, {
         charset: 'utf8mb4',

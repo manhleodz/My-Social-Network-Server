@@ -27,6 +27,20 @@ module.exports = (sequelize, DataTypes) => {
         seen: {
             type: DataTypes.STRING,
             allowNull: true,
+        },
+        UserId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
+        createdAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.fn('now'),
+        },
+        updatedAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            defaultValue: sequelize.fn('now'),
         }
     }, {
         charset: 'utf8mb4',
@@ -36,6 +50,7 @@ module.exports = (sequelize, DataTypes) => {
     Story.associate = (models) => {
         Story.belongsTo(models.Users, {
             onDelete: "cascade",
+            foreignKey: "UserId"
         });
     };
     return Story;
