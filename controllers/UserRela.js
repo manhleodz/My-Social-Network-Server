@@ -145,7 +145,7 @@ const getListFriend = async (req, res) => {
         })
 
         const friends = await Users.findAll({
-            attributes: ['id', 'nickname', 'username', 'avatar', 'online'],
+            attributes: ['id', 'nickname', 'username', 'smallAvatar', 'online'],
             where: { id: friendIds },
             order: [['id', 'ASC']]
         })
@@ -160,7 +160,7 @@ const getListFriend = async (req, res) => {
                     "id": friends[i].id,
                     "nickname": friends[i].nickname,
                     "username": friends[i].username,
-                    "avatar": friends[i].avatar,
+                    "smallAvatar": friends[i].smallAvatar,
                     "online": friends[i].online,
                 });
         }
@@ -199,7 +199,7 @@ const getNineFriends = async (req, res) => {
         })
 
         const friends = await Users.findAll({
-            attributes: ['id', 'nickname', 'username', 'avatar', 'online'],
+            attributes: ['id', 'nickname', 'username', 'smallAvatar', 'online'],
             where: { id: friendIds },
             order: [['id', 'ASC']]
         })
@@ -214,7 +214,7 @@ const getNineFriends = async (req, res) => {
                     "id": friends[i].id,
                     "nickname": friends[i].nickname,
                     "username": friends[i].username,
-                    "avatar": friends[i].avatar,
+                    "smallAvatar": friends[i].smallAvatar,
                     "online": friends[i].online,
                 });
         }
@@ -244,8 +244,9 @@ const getFriendRequest = async (req, res) => {
             },
             include: [
                 {
-                    attributes: ['id', 'nickname', 'username', 'avatar', 'online'],
-                    model: Users
+                    attributes: ['id', 'nickname', 'username', 'smallAvatar', 'online'],
+                    model: Users,
+                    as: "Sender"
                 }
             ]
         });

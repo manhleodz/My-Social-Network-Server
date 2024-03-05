@@ -16,7 +16,7 @@ const getAll = async (req, res, next) => {
                 attributes: ['id', 'link', 'expires', 'public', 'seen', 'createdAt', 'updatedAt', 'backgroundColor'],
                 include: [
                     {
-                        attributes: ['id', 'nickname', 'username', 'avatar'],
+                        attributes: ['id', 'nickname', 'username', 'smallAvatar'],
                         model: Users
                     }
                 ],
@@ -30,7 +30,7 @@ const getAll = async (req, res, next) => {
                 attributes: ['id', 'link', 'expires', 'public', 'seen', 'createdAt', 'updatedAt', 'backgroundColor'],
                 include: [
                     {
-                        attributes: ['id', 'nickname', 'username', 'avatar'],
+                        attributes: ['id', 'nickname', 'username', 'smallAvatar'],
                         model: Users
                     }
                 ],
@@ -57,7 +57,7 @@ const getHomeStory = async (req, res, next) => {
             order: [['id', 'DESC']],
             include: [
                 {
-                    attributes: ['username', 'avatar'],
+                    attributes: ['username', 'smallAvatar'],
                     model: Users
                 }
             ],
@@ -80,7 +80,7 @@ const getByUser = async (req, res, next) => {
             where: { UserId: userId },
             include: [
                 {
-                    attributes: ['id', 'nickname', 'username', 'avatar'],
+                    attributes: ['id', 'nickname', 'username', 'smallAvatar'],
                     model: Users
                 }
             ]
@@ -100,7 +100,7 @@ const getById = async (req, res, next) => {
             attributes: ['id', 'link', 'expires', 'seen', 'backgroundColor'],
             include: [
                 {
-                    attributes: ['id', 'nickname', 'username', 'avatar'],
+                    attributes: ['id', 'nickname', 'username', 'smallAvatar'],
                     model: Users
                 }
             ]
@@ -212,7 +212,9 @@ const post = async (req, res) => {
                     backgroundColor
                 });
 
-                const User = await Users.findByPk(UserId);
+                const User = await Users.findByPk(UserId, {
+                    attributes: ['id', 'nickname', 'username', 'smallAvatar']
+                });
 
                 res.status(200).json({
                     message: "Upload Successfully",
@@ -229,7 +231,7 @@ const post = async (req, res) => {
                             "id": UserId,
                             "nickname": User.nickname,
                             "username": User.username,
-                            "avatar": User.avatar
+                            "smallAvatar": User.smallAvatar
                         }
                     }
                 });

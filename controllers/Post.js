@@ -16,7 +16,7 @@ const getPost = async (req, res, next) => {
             where: { public: true },
             order: [['updatedAt', 'DESC']],
             include: [{
-                attributes: ['username', 'nickname', 'avatar',],
+                attributes: ['username', 'nickname', 'smallAvatar',],
                 model: Users
             }, {
                 attributes: ['link', 'id', 'type', 'backgroundColor'],
@@ -84,7 +84,7 @@ const getPostById = async (req, res, next) => {
         }
         const post = await Posts.findByPk(id, {
             include: [{
-                attributes: ['username', 'nickname', 'avatar',],
+                attributes: ['username', 'nickname', 'smallAvatar',],
                 model: Users
             }, {
                 attributes: ['link', 'id', 'type', 'backgroundColor'],
@@ -125,7 +125,7 @@ const getPostByUser = async (req, res, next) => {
             where: { UserId: userId1, public: true },
             order: [['id', 'DESC']],
             include: [{
-                attributes: ['username', 'nickname', 'avatar',],
+                attributes: ['username', 'nickname', 'smallAvatar',],
                 model: Users
             }, {
                 attributes: ['link', 'id', 'type', 'backgroundColor'],

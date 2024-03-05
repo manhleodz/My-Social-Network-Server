@@ -8,7 +8,7 @@ const getCommentsByPost = async (req, res, next) => {
             attributes:['id', 'commentBody', 'likeNumber', 'PostId', 'createdAt', 'updatedAt'],
             where: { PostId: postID },
             include: [{
-                attributes: ['id', 'username', 'nickname', 'avatar'],
+                attributes: ['id', 'username', 'nickname', 'smallAvatar'],
                 model: Users
             }],
             limit: 10

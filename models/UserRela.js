@@ -28,12 +28,14 @@ module.exports = (sequelize, DataTypes) => {
     UserRela.associate = (models) => {
         UserRela.belongsTo(models.Users, {
             onDelete: "cascade",
-            foreignKey: "User1"
+            foreignKey: "User1",
+            as: "Sender"
         });
 
         UserRela.belongsTo(models.Users, {
             onDelete: "cascade",
             foreignKey: "User2",
+            as: "Reciever"
         });
     }
 

@@ -80,6 +80,7 @@ const makeInfo = async (req, res) => {
                     email: duplication.email,
                     confirm: duplication.confirm,
                     avatar: duplication.avatar,
+                    smallAvatar: duplication.smallAvatar,
                     email: duplication.email,
                     id: duplication.id,
                     nickname: duplication.nickname
@@ -197,7 +198,7 @@ const login = async (req, res) => {
         const { information, password } = req.body;
 
         const user = await Users.findOne({
-            attributes: ['id', 'username', 'nickname', 'avatar', 'password', 'confirm', 'email'],
+            attributes: ['id', 'username', 'nickname', 'smallAvatar', 'password', 'confirm', 'email'],
             where: {
                 [Op.or]: [
                     { username: information },
@@ -233,7 +234,7 @@ const login = async (req, res) => {
                             token: accessToken,
                             email: user.email,
                             confirm: user.confirm,
-                            avatar: user.avatar,
+                            smallAvatar: user.smallAvatar,
                             email: user.email,
                             id: user.id,
                             nickname: user.nickname
@@ -256,7 +257,7 @@ const getProfile = async (req, res) => {
         const userId = req.user.id;
         if (isNaN(info)) {
             const profile = await Users.findOne({
-                attributes: ['id', 'username', 'nickname', 'avatar', 'gender', 'background', 'backgroundColor', 'address', 'story', 'workAt', 'studyAt', 'favorites', 'birthday', 'online'],
+                attributes: ['id', 'username', 'nickname', 'smallAvatar', 'gender', 'background', 'backgroundColor', 'address', 'story', 'workAt', 'studyAt', 'favorites', 'birthday', 'online'],
                 where: { username: info }
             })
 
@@ -297,7 +298,7 @@ const getProfile = async (req, res) => {
             });
         } else {
             const profile = await Users.findOne({
-                attributes: ['id', 'username', 'nickname', 'avatar', 'gender', 'background', 'address', 'story', 'workAt', 'studyAt', 'favorites', 'birthday', 'online'],
+                attributes: ['id', 'username', 'nickname', 'smallAvatar', 'gender', 'background', 'address', 'story', 'workAt', 'studyAt', 'favorites', 'birthday', 'online'],
                 where: { id: info }
             });
 
@@ -350,7 +351,7 @@ const updateUserProfile = async (req, res) => {
         const userId = req.user.id;
         const updateData = req.body;
 
-        const newInfo = await Users.update(updateData, {
+        await Users.update(updateData, {
             where: { id: userId }
         });
 
@@ -370,7 +371,7 @@ const refreshStateUser = async (req, res) => {
     try {
         const email = req.user.email;
         const info = await Users.findOne({
-            attributes: ['id', 'username', 'nickname', 'avatar', 'confirm'],
+            attributes: ['id', 'username', 'nickname', 'smallAvatar', 'confirm'],
             where: { email: email }
         });
 
@@ -412,11 +413,34 @@ const updateAvatarAndBackground = async (req, res) => {
 
         const downloadURL = await getDownloadURL(snapshot.ref);
 
-
         if (type === "avatar") {
+
+            let smallAvatar;
+            await resizeImage(files[0].buffer)
+                .then(async (data) => {
+                    const storageRef = ref(storage, `avatars/${files[0].originalname + "_" + dateTime}_${uuid4}`);
+
+                    const contentType = (String)(files[0].mimetype);
+
+                    const metadata = {
+                        contentType: contentType,
+                    };
+
+                    const snapshot = await uploadBytesResumable(storageRef, data, metadata);
+
+                    smallAvatar = await getDownloadURL(snapshot.ref);
+                })
+                .catch(error => {
+                    throw new Error('Error calculating average color:' + error.message);
+                });
 
             await Users.update({
                 avatar: downloadURL,
+                smallAvatar
+            }, { where: { id: userId } })
+
+            res.status(200).json({
+                message: "Updated successfully"
             })
         } else if (type === "background") {
 
@@ -432,7 +456,11 @@ const updateAvatarAndBackground = async (req, res) => {
             await Users.update({
                 background: downloadURL,
                 backgroundColor
-            }, {where: {id : userId}})
+            }, { where: { id: userId } });
+
+            res.status(200).json({
+                message: "Updated successfully"
+            })
         } else throw new Error("Không xác định được yêu cầu!");
     } catch (err) {
         res.status(400).json({
@@ -441,6 +469,25 @@ const updateAvatarAndBackground = async (req, res) => {
         });
     }
 };
+
+async function resizeImage(imageBuffer) {
+    try {
+
+        const { data } = await sharp(imageBuffer)
+            .resize({
+                width: 200,
+                height: 200,
+                fit: sharp.fit.cover,
+                position: sharp.strategy.entropy
+            })
+            .toBuffer({ resolveWithObject: true });
+
+        return data;
+
+    } catch (error) {
+        console.error('Failed to calculate average color:', error);
+    }
+}
 
 async function calculateAverageImageColor(imageBuffer) {
     try {
