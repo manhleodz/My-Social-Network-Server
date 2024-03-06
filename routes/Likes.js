@@ -28,7 +28,7 @@ router.get("/:postId", async (req, res) => {
         where: { PostId: postId },
         include: [
             {
-                attributes: ['id', 'username', 'nickname', 'avatar'],
+                attributes: ['id', 'username', 'nickname', 'smallAvatar'],
                 model: Users
             }
         ]

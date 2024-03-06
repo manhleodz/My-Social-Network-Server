@@ -35,7 +35,7 @@ module.exports = (sequelize, DataTypes) => {
         UserRela.belongsTo(models.Users, {
             onDelete: "cascade",
             foreignKey: "User2",
-            as: "Reciever"
+            as: "Receiver"
         });
     }
 

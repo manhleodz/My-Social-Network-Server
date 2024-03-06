@@ -12,7 +12,8 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.TEXT,
         },
         room: {
-            type: DataTypes.STRING,
+            type: DataTypes.INTEGER,
+            allowNull: true
         },
         createdAt: {
             type: DataTypes.DATE,

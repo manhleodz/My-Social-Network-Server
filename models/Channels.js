@@ -27,5 +27,14 @@ module.exports = (sequelize, DataTypes) => {
         collate: 'utf8mb4_unicode_ci'
     });
 
+    Channels.associate = (models) => {
+        Channels.hasMany(models.UserRela, {
+            foreignKey: "ChannelId"
+        });
+        Channels.hasMany(models.Inbox, {
+            foreignKey: "ChannelId"
+        })
+    }
+
     return Channels;
 };

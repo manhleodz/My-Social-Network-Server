@@ -263,10 +263,42 @@ const getFriendRequest = async (req, res) => {
     }
 }
 
+const getUnconfirmedRequest = async (req, res) => {
+    try {
+        const id = req.user.id;
+
+        const list = await UserRela.findAll({
+            attributes: ['id'],
+            where: {
+                status: 0,
+                User1: id
+            },
+            include: [
+                {
+                    attributes: ['id', 'nickname', 'username', 'smallAvatar', 'online'],
+                    model: Users,
+                    as: "Receiver"
+                }
+            ]
+        });
+
+        res.status(200).json({
+            message: "Successfully get friend request",
+            data: list
+        });
+    } catch (err) {
+        res.status(400).json({
+            message: "Lỗi server ông ơi",
+            error: err.message
+        })
+    }
+}
+
 module.exports = {
     addFriends,
     deleteFriend,
     getListFriend,
     getFriendRequest,
-    getNineFriends
+    getNineFriends,
+    getUnconfirmedRequest
 }
