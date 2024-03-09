@@ -139,6 +139,14 @@ async function statusRelationship(userId, listId, listUser) {
                             nickname: listUser[i].nickname,
                             isFriend: 3
                         })
+                    } else if (findStatus.status === 2) {
+                        result.push({
+                            id: listUser[i].id,
+                            username: listUser[i].username,
+                            smallAvatar: listUser[i].smallAvatar,
+                            nickname: listUser[i].nickname,
+                            isFriend: 0
+                        })
                     } else if (findStatus.status === 0) {
                         if (findStatus.User1 === userId) {
                             result.push({
