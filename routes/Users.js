@@ -37,15 +37,6 @@ router.put("/name/:id", validateToken, async (req, res) => {
 // get user profile
 router.get("/:info", validateToken, getProfile);
 
-router.get("/all/users", async (req, res) => {
-    try {
-        const listUser = await Users.findAll({ attributes: ['id', 'username', 'nickname', 'avatar', 'confirm'] });
-        res.status(200).json(listUser);
-    } catch (err) {
-        res.status(400).json(err);
-    }
-})
-
 //update user profile
 router.put("/changeinfo", validateToken, updateUserProfile);
 

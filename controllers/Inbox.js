@@ -2,23 +2,18 @@ const { Users, Inbox, Channels, ChannelMembers } = require("../models");
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 
-const getMessage = async (req, res) => {
+const getConversationMessage = async (req, res) => {
 
     try {
 
-        const ChannelId = req.params.channelId;
+        const RelationshipId = req.params.RelationshipId;
         const userId = req.user.id;
 
-        const checker = await ChannelMembers.findAll({
-            attributes: ['id', 'role', 'UserId'],
-            where: {ChannelId: ChannelId}
-        })
-
         const list = await Inbox.findAll({
-            attributes: ['id', 'sender', 'message', 'room', 'createdAt', 'updatedAt'],
-            order: [['createdAt', 'DESC']],
+            attributes: ['id', 'sender', 'message', 'RelationshipId', 'createdAt', 'updatedAt'],
+            order: [['id', 'DESC']],
             limit: 20,
-            where: { ChannelId: ChannelId },
+            where: { RelationshipId: RelationshipId },
         })
 
         res.status(200).json({
@@ -33,14 +28,15 @@ const getMessage = async (req, res) => {
     }
 }
 
-const sendMessaeg = async (req, res) => {
+const sendConversationMessage = async (req, res) => {
     try {
 
-        let data = req.body;
+        const { receiver, message, type, RelationshipId } = req.body;
+
+        if (!receiver || !message || !type || !RelationshipId) throw new Error("Cannot send conversation message");
         const sender = req.user.id;
 
-        data.sender = sender;
-
+        const data = { receiver, message, type, RelationshipId, sender };
         const newMessage = await Inbox.create(data);
 
         res.status(200).json({
@@ -195,8 +191,8 @@ const deleteGroup = async (req, res) => {
 }
 
 module.exports = {
-    getMessage,
-    sendMessaeg,
+    getConversationMessage,
+    sendConversationMessage,
     deleteMessage,
     createGroup,
     deleteGroup

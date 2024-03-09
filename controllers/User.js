@@ -14,6 +14,22 @@ const Mailgen = require('mailgen');
 const { EMAIL, PASSWORD } = require('../env.js');
 const { Decode } = require('../helpers/Decode.js');
 
+const Redis = require('redis');
+
+const redisClient = Redis.createClient({
+    password: process.env.REDIS_PASSWORD,
+    socket: {
+        host: process.env.REDIS_HOST,
+        port: process.env.REDIS_PORT
+    }
+});
+
+redisClient.connect().catch(console.error);
+
+if (!redisClient.isOpen) {
+    redisClient.connect().catch(console.error);
+};
+
 const signup = async (req, res) => {
 
     try {
@@ -31,6 +47,7 @@ const signup = async (req, res) => {
                     email: email,
                 });
 
+                await redisClient.SET(`account-${newAccount.id}`, newAccount.id);
                 id = newAccount.id;
             }).then((e) => {
                 const accessToken = sign(
@@ -257,7 +274,7 @@ const getProfile = async (req, res) => {
         const userId = req.user.id;
         if (isNaN(info)) {
             const profile = await Users.findOne({
-                attributes: ['id', 'username', 'nickname', 'smallAvatar', 'gender', 'background', 'backgroundColor', 'address', 'story', 'workAt', 'studyAt', 'favorites', 'birthday', 'online'],
+                attributes: ['id', 'username', 'nickname', 'smallAvatar', 'gender', 'background', 'backgroundColor', 'address', 'story', 'workAt', 'studyAt', 'favorites', 'birthday',],
                 where: { username: info }
             })
 
@@ -279,7 +296,7 @@ const getProfile = async (req, res) => {
                 }
             });
 
-            let isFriend = -1;
+            let isFriend = 0;
             if (checker) {
                 if (checker.status === 0 && userId === checker.User1)
                     isFriend = 1;
@@ -298,7 +315,7 @@ const getProfile = async (req, res) => {
             });
         } else {
             const profile = await Users.findOne({
-                attributes: ['id', 'username', 'nickname', 'smallAvatar', 'gender', 'background', 'address', 'story', 'workAt', 'studyAt', 'favorites', 'birthday', 'online'],
+                attributes: ['id', 'username', 'nickname', 'smallAvatar', 'gender', 'background', 'address', 'story', 'workAt', 'studyAt', 'favorites', 'birthday',],
                 where: { id: info }
             });
 

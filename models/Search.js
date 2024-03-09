@@ -6,6 +6,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.TEXT,
             allowNull: false,
         },
+        times: {
+            type: DataTypes.INTEGER,
+            defaultValue: 1
+        },
         createdAt: {
             type: DataTypes.DATE,
             allowNull: false,

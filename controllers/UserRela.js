@@ -52,8 +52,59 @@ const addFriends = async (req, res) => {
                     res.status(200).json({
                         message: "Already be friend!"
                     })
+                } else if (checker.status === 2) {
+                    await UserRela.update({ User1: User1, User2: User2, status: 0 }, { where: { id: checker.id } });
+                    res.status(200).json({
+                        message: "Add Friend Successfully"
+                    })
                 }
             }
+        }
+
+    } catch (err) {
+        res.status(400).json({
+            message: "error",
+            error: err.message
+        });
+    }
+}
+
+const addChannelMessageRequest = async (req, res) => {
+    try {
+        const User1 = req.user.id;
+        const User2 = req.body.user;
+
+        if (User1 === User2) throw new Error("Error");
+        if (!User2) throw new Error("Cant find user");
+
+        const checker = await UserRela.findOne({
+            where: {
+                [Op.and]: [
+                    {
+                        [Op.or]: [
+                            { User1: User1 }, { User1: User2 }
+                        ]
+                    },
+                    {
+                        [Op.or]: [
+                            { User2: User2 }, { User2: User1 }
+                        ]
+                    }
+                ]
+            }
+        })
+
+        if (checker === null) {
+            const relationshipId = await UserRela.create({ User1: User1, User2: User2, status: 2 })
+            res.status(201).json({
+                message: "Success",
+                relationshipId
+            })
+        } else {
+            res.status(200).json({
+                message: "Success",
+                relationshipId: checker
+            })
         }
 
     } catch (err) {
@@ -145,7 +196,7 @@ const getListFriend = async (req, res) => {
         })
 
         const friends = await Users.findAll({
-            attributes: ['id', 'nickname', 'username', 'smallAvatar', 'online'],
+            attributes: ['id', 'nickname', 'username', 'smallAvatar',],
             where: { id: friendIds },
             order: [['id', 'ASC']]
         })
@@ -199,7 +250,7 @@ const getNineFriends = async (req, res) => {
         })
 
         const friends = await Users.findAll({
-            attributes: ['id', 'nickname', 'username', 'smallAvatar', 'online'],
+            attributes: ['id', 'nickname', 'username', 'smallAvatar',],
             where: { id: friendIds },
             order: [['id', 'ASC']]
         })
@@ -244,7 +295,7 @@ const getFriendRequest = async (req, res) => {
             },
             include: [
                 {
-                    attributes: ['id', 'nickname', 'username', 'smallAvatar', 'online'],
+                    attributes: ['id', 'nickname', 'username', 'smallAvatar',],
                     model: Users,
                     as: "Sender"
                 }
@@ -275,7 +326,7 @@ const getUnconfirmedRequest = async (req, res) => {
             },
             include: [
                 {
-                    attributes: ['id', 'nickname', 'username', 'smallAvatar', 'online'],
+                    attributes: ['id', 'nickname', 'username', 'smallAvatar',],
                     model: Users,
                     as: "Receiver"
                 }
@@ -300,5 +351,6 @@ module.exports = {
     getListFriend,
     getFriendRequest,
     getNineFriends,
-    getUnconfirmedRequest
+    getUnconfirmedRequest,
+    addChannelMessageRequest
 }

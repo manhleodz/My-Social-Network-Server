@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
             allowNull: true
         },
         role: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.INTEGER, //# admin 1, user 2
             allowNull: false
         },
         UserId: {

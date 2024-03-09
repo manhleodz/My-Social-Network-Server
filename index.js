@@ -3,13 +3,16 @@ const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const bodyParser = require('body-parser');
+const app = express();
+var http = require('http').createServer(app);
+var io = require('socket.io')(http);
 
 const port = process.env.PORT;
 
 // rate limit
 const apiLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minutes
-  max: 50,
+  max: 100,
   message: 'Too many connection',
   handler: (request, response, next, options) => {
     if (request.rateLimit.used === request.rateLimit.limit + 1) {
@@ -19,9 +22,8 @@ const apiLimiter = rateLimit({
   },
 });
 
-const app = express();
 app.set('trust proxy', (ip) => {
-  if (ip === 'http://localhost:3040' || ip === 'https://my-social-network-umber.vercel.app') return true 
+  if (ip === 'http://localhost:3040' || ip === 'https://my-social-network-umber.vercel.app') return true
   else return false
 })
 
@@ -30,7 +32,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
   extended: true
-})); 
+}));
 
 const db = require('./models');
 
@@ -70,9 +72,41 @@ app.use("/api/images", imageRouter);
 const searchRouter = require("./routes/Search");
 app.use("/api/search", searchRouter);
 
+
+io.on("connection", (socket) => {
+
+  socket.on('online', async (user) => {
+    io.sockets.emit('joined', reply);
+  });
+
+  socket.on("join_room", (data) => {
+    socket.join(data);
+    console.log(`User with ID: ${socket.id} joined room: ${JSON.stringify(data)}`);
+  });
+
+  socket.on("typing", (data) => {
+    socket.in(data.room).emit("typing")
+  });
+  socket.on("stop typing", (data) => {
+    socket.in(data.room).emit("stop typing")
+  });
+
+  socket.on("send_message", (data) => {
+    socket.to(data.room).emit("receive_message", data);
+    console.log(data);
+  });
+
+  socket.on("disconnect", async (userId) => {
+    io.sockets.emit('joined', []);
+  });
+
+  socket.off("setup", () => {
+    console.log("USER DISCONNECTED");
+  });
+});
+
 db.sequelize.sync().then(() => {
   app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
   });
 });
-

@@ -9,9 +9,9 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: false,
         },
-        status: {
-            type: DataTypes.INTEGER,
-            defaultValue: 0
+        status: {                                     // 0: chờ xác nhận
+            type: DataTypes.INTEGER,                  // 1: đã là bạn
+            defaultValue: 0                           // 2: chưa là bạn nhưng có thể nhắn tin
         },
         createdAt: {
             type: DataTypes.DATE,

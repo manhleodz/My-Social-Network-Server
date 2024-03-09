@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { validateToken } = require('../middlewares/AuthMiddleware');
-const { getMessage, sendMessaeg, deleteMessage, createGroup, deleteGroup } = require('../controllers/Inbox');
+const { deleteMessage, createGroup, deleteGroup, getConversationMessage, sendConversationMessage } = require('../controllers/Inbox');
 
-router.get("/:friend", validateToken, getMessage)
+router.get("/:RelationshipId", validateToken, getConversationMessage)
 
-router.post("/", validateToken, sendMessaeg);
+router.post("/", validateToken, sendConversationMessage);
 
 router.delete("/:id", validateToken, deleteMessage);
 

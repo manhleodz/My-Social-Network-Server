@@ -10,8 +10,17 @@ module.exports = (sequelize, DataTypes) => {
         },
         message: {
             type: DataTypes.TEXT,
+            allowNull: false
         },
-        room: {
+        type: {
+            type: DataTypes.STRING(20),   // text, image, video, mp4, gif
+            allowNull: false,
+        },
+        RelationshipId: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
+        ChannelId: {
             type: DataTypes.INTEGER,
             allowNull: true
         },
@@ -40,6 +49,14 @@ module.exports = (sequelize, DataTypes) => {
             onDelete: "cascade",
             foreignKey: "receiver",
             as: "Receiver"
+        });
+        Inbox.belongsTo(models.Channels, {
+            onDelete: "cascade",
+            foreignKey: "ChannelId",
+        });
+        Inbox.belongsTo(models.UserRela, {
+            onDelete: "cascade",
+            foreignKey: "RelationshipId",
         });
     };
     return Inbox;

@@ -33,10 +33,6 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             defaultValue: 0,
         },
-        online: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: false,
-        },
         isActive: {
             type: DataTypes.INTEGER,
             allowNull: true,

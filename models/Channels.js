@@ -8,6 +8,14 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.TEXT,
             allowNull: true
         },
+        background: {
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
+        lastMessage: {
+            type: DataTypes.TEXT,
+            allowNull: false
+        },
         public: {
             type: DataTypes.BOOLEAN,
             allowNull: false
@@ -28,9 +36,6 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     Channels.associate = (models) => {
-        Channels.hasMany(models.UserRela, {
-            foreignKey: "ChannelId"
-        });
         Channels.hasMany(models.Inbox, {
             foreignKey: "ChannelId"
         })
