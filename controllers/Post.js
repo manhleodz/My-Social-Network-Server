@@ -121,6 +121,8 @@ const getPostByUser = async (req, res, next) => {
         const userId2 = req.user.id;
         const page = (Number)(req.query.page);
 
+        let public = !(userId1 === userId2);
+
         var listOfPosts = await Posts.findAll({
             where: { UserId: userId1, public: true },
             order: [['id', 'DESC']],
@@ -199,16 +201,15 @@ async function calculateAverageImageColor(imageBuffer) {
 };
 
 const makeNewPost = async (req, res, next) => {
-    try {
+    // try {
         const files = req.files;
         const postText = req.body.postText;
         const public = req.body.public;
         const UserId = req.user.id;
 
-        if (!UserId || (files.length === 0 && !postText) || (files.length === 0 && postText.length === 0)) return res.status(400).json({
-            message: "Upload failed",
-        })
-        else if (!files || files.length === 0) {
+        if ((files.length === 0 && !postText) || (files.length === 0 && postText.length === 0)) throw new Error("Không có thông tin nào à???");
+
+        if (!files || files.length === 0) {
 
             const newPost = await Posts.create({
                 postText,
@@ -364,12 +365,12 @@ const makeNewPost = async (req, res, next) => {
                 newPost: public ? newPost : {}
             })
         }
-    } catch (err) {
-        res.status(400).json({
-            message: "Upload failed",
-            error: err.message
-        });
-    }
+    // } catch (err) {
+    //     res.status(400).json({
+    //         message: "Upload failed",
+    //         error: err.message
+    //     });
+    // }
 };
 
 const updatePost = async (req, res, next) => {

@@ -281,7 +281,7 @@ const result = async (req, res) => {
                     }
 
                     result = await Posts.findAll({
-                        where: Sequelize.literal(` "public" = true AND lower(unaccent("postText")) ILIKE lower(unaccent(:searchValue)) OR "UserId" IN (${stringId})`),
+                        where: Sequelize.literal(`"public" = true AND lower(unaccent("postText")) ILIKE lower(unaccent(:searchValue)) OR "UserId" IN (${stringId})`),
                         replacements: { searchValue: `%${search}%` },
                         order: [['updatedAt', 'DESC']],
                         include: [{

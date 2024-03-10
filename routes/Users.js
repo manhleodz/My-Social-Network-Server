@@ -3,7 +3,7 @@ const router = express.Router();
 
 const { signup, verifyEmail, login, makeInfo, getProfile, updateUserProfile, refreshStateUser, updateAvatarAndBackground } = require('../controllers/User');
 
-const { Users } = require("../models");
+const { Users, Posts } = require("../models");
 const { validateToken } = require('../middlewares/AuthMiddleware');
 const uploadMiddleware = require('../middlewares/multer');
 
