@@ -2,7 +2,7 @@ module.exports = (sequelize, DataTypes) => {
     const Inbox = sequelize.define("Inbox", {
         receiver: {
             type: DataTypes.INTEGER,
-            allowNull: false,
+            allowNull: true,
         },
         sender: {
             type: DataTypes.INTEGER,

@@ -83,6 +83,40 @@ const deleteMessage = async (req, res) => {
     }
 }
 
+const changeMessage = async (req, res) => {
+
+    try {
+
+        const id = req.params.id;
+        const userId = req.user.id;
+        const { message } = req.body;
+
+        const checker = await Inbox.findByPk(id, {
+            attributes: ['sender']
+        });
+
+        if (checker.sender == userId) {
+            await Inbox.update({
+                message: message,
+                updatedAt: Sequelize.fn("now")
+            }, { where: { id: id } });
+
+            res.status(200).json({
+                message: "Successfully",
+            })
+        } else {
+            res.status(200).json({
+                message: "You don't have permission",
+            })
+        }
+    } catch (err) {
+        res.status(400).json({
+            message: "Lỗi server",
+            error: err.message
+        });
+    }
+}
+
 const OpenChat = async (req, res) => {
 
     try {
@@ -115,6 +149,157 @@ const OpenChat = async (req, res) => {
     } catch (err) {
         res.status(400).json({
             message: "Lỗi bé ơi",
+            error: err.message
+        });
+    }
+}
+
+const getListGroups = async (req, res) => {
+
+    try {
+
+        const userId = req.user.id;
+
+        const list = await Channels.findAll({
+            attributes: ['id', 'name', 'avatar', 'background', 'updatedAt', 'lastMessage'],
+            order: [['updatedAt', 'DESC']],
+            include: [{
+                model: ChannelMembers,
+                where: { UserId: userId }
+            }]
+        })
+
+        if (list.length === 0) res.status(204).json("success");
+
+        else {
+            res.status(200).json({
+                message: "Successfully",
+                data: list
+            })
+        }
+    } catch (err) {
+        res.status(400).json({
+            message: "Lỗi bé ơi",
+            error: err.message
+        });
+    }
+};
+
+const getGroupById = async (req, res) => {
+
+    try {
+
+        const userId = req.user.id;
+        const id = req.params.id;
+
+        const result = await Channels.findByPk(id, {
+            attributes: ['id', 'name', 'avatar', 'background', 'updatedAt', 'lastMessage'],
+            include: [{
+                model: Inbox,
+                where: { ChannelId: id }
+            }]
+        })
+
+        if (!result) res.status(404).json("");
+
+        else {
+            res.status(200).json({
+                message: "Successfully",
+                data: result
+            })
+        }
+    } catch (err) {
+        res.status(400).json({
+            message: "Lỗi bé ơi",
+            error: err.message
+        });
+    }
+};
+
+const sendGroupMessage = async (req, res) => {
+    try {
+
+        const { message, type, ChannelId } = req.body;
+
+        if (!message || !type || !ChannelId) throw new Error("Cannot send group message");
+        const sender = req.user.id;
+
+        const data = { message, type, ChannelId, sender };
+        const newMessage = await Inbox.create(data);
+
+        res.status(200).json({
+            message: "Send successfully",
+            data: newMessage
+        })
+    } catch (err) {
+        res.status(400).json({
+            message: "Lỗi server",
+            error: err.message
+        });
+    }
+}
+
+const deleteGroupMessage = async (req, res) => {
+
+    try {
+
+        const id = req.params.id;
+        const userId = req.user.id;
+
+        const checker = await Inbox.findByPk(id, {
+            attributes: ['sender']
+        });
+
+        if (checker.sender == userId) {
+            await Inbox.destroy({
+                id: id
+            });
+
+            res.status(200).json({
+                message: "Deleted successfully",
+            })
+        } else {
+            res.status(200).json({
+                message: "You don't have permission",
+            })
+        }
+    } catch (err) {
+        res.status(400).json({
+            message: "Lỗi server",
+            error: err.message
+        });
+    }
+}
+
+const changeGroupMessage = async (req, res) => {
+
+    try {
+
+        const id = req.params.id;
+        const userId = req.user.id;
+        const { message } = req.body;
+
+        const checker = await Inbox.findByPk(id, {
+            attributes: ['sender']
+        });
+
+        if (checker.sender == userId) {
+            await Inbox.update({
+                message: message,
+                updatedAt: Sequelize.fn("now")
+            }, { where: { id: id } });
+
+            res.status(200).json({
+                message: "Successfully",
+            })
+        } else {
+            res.status(200).json({
+                message: "You don't have permission",
+            })
+        }
+    } catch (err) {
+        res.status(400).json({
+            message: "Lỗi server",
             error: err.message
         });
     }
@@ -194,6 +379,12 @@ module.exports = {
     getConversationMessage,
     sendConversationMessage,
     deleteMessage,
+    changeMessage,
     createGroup,
-    deleteGroup
+    getListGroups,
+    deleteGroup,
+    sendGroupMessage,
+    deleteGroupMessage,
+    getGroupById,
+    changeGroupMessage
 }

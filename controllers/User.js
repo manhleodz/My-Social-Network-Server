@@ -47,7 +47,7 @@ const signup = async (req, res) => {
                     email: email,
                 });
 
-                await redisClient.SET(`account-${newAccount.id}`, newAccount.id);
+                await redisClient.SET(`account-${newAccount.id}`, JSON.stringify({online: false}));
                 id = newAccount.id;
             }).then((e) => {
                 const accessToken = sign(

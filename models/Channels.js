@@ -39,6 +39,10 @@ module.exports = (sequelize, DataTypes) => {
         Channels.hasMany(models.Inbox, {
             foreignKey: "ChannelId"
         })
+
+        Channels.hasMany(models.ChannelMembers, {
+            foreignKey: "ChannelId"
+        })
     }
 
     return Channels;

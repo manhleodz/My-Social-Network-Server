@@ -201,7 +201,7 @@ async function calculateAverageImageColor(imageBuffer) {
 };
 
 const makeNewPost = async (req, res, next) => {
-    // try {
+    try {
         const files = req.files;
         const postText = req.body.postText;
         const public = req.body.public;
@@ -365,22 +365,44 @@ const makeNewPost = async (req, res, next) => {
                 newPost: public ? newPost : {}
             })
         }
-    // } catch (err) {
-    //     res.status(400).json({
-    //         message: "Upload failed",
-    //         error: err.message
-    //     });
-    // }
+    } catch (err) {
+        res.status(400).json({
+            message: "Upload failed",
+            error: err.message
+        });
+    }
 };
 
 const updatePost = async (req, res, next) => {
     try {
-        const data = req.body;
+        const { postText } = req.body;
+        const userId = req.user.id;
         const id = req.params.id;
-        await Posts.update({ postText: data }, { where: { id: id } });
-        res.status(200).json("success");
+
+        if (!postText) throw new Error("????????????????");
+
+        const checker = await Posts.findByPk(id, {
+            attributes: ['UserId']
+        });
+
+        if (!checker) throw new Error("Couldn't find post with id " + id);
+
+        if (checker.UserId !== userId) throw new Error("You do not have permission");
+
+        if (checker.UserId === userId) {
+
+            await Posts.update({
+                postText: postText,
+                updatedAt: Sequelize.fn("now")
+            }, { where: { id: id } });
+            res.status(200).json("success");
+        }
+
     } catch (err) {
-        res.status(400).json("Server error");
+        res.status(400).json({
+            message: "Error updating post",
+            error: err.message
+        });
     }
 };
 
@@ -417,7 +439,10 @@ const updateLikeNum = async (req, res) => {
             where: { PostId: PostId }
         })
 
-        Posts.update({ likeNumber: amount }, { where: { id: PostId } })
+        await Posts.update({
+            likeNumber: amount,
+            updatedAt: Sequelize.fn("now")
+        }, { where: { id: PostId } })
         res.status(200).json("success");
     } catch (err) {
         res.status(400).json("Server error");
@@ -431,7 +456,10 @@ const updateCommentNumber = async (req, res) => {
             where: { PostId: PostId }
         })
 
-        Posts.update({ commentNumber: amount }, { where: { id: PostId } })
+        await Posts.update({
+            commentNumber: amount,
+            updatedAt: Sequelize.fn("now")
+        }, { where: { id: PostId } })
         res.status(200).json("success");
     } catch (err) {
         res.status(400).json("Server error");

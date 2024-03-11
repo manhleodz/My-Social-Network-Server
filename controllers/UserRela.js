@@ -1,5 +1,21 @@
-const nodemailer = require('nodemailer');
 const { Op, where } = require("sequelize");
+const Redis = require('redis');
+
+const redisClient = Redis.createClient({
+    password: process.env.REDIS_PASSWORD,
+    socket: {
+        host: process.env.REDIS_HOST,
+        port: process.env.REDIS_PORT
+    }
+});
+
+const DEFAULT_EXPIRATION = 300;
+
+redisClient.connect().catch(console.error);
+
+if (!redisClient.isOpen) {
+    redisClient.connect().catch(console.error);
+};
 
 const { Users, UserRela } = require("../models");
 require('dotenv').config();
@@ -205,6 +221,8 @@ const getListFriend = async (req, res) => {
         for (let i = 0; i < list.length; i++) {
 
             const including = isIncluded(list, friends[i].id);
+            let user = await redisClient.get(`account-${friends[i].id}`);
+            user = JSON.parse(user);
             if (including)
                 result.push({
                     "relationshipId": including,
@@ -212,7 +230,7 @@ const getListFriend = async (req, res) => {
                     "nickname": friends[i].nickname,
                     "username": friends[i].username,
                     "smallAvatar": friends[i].smallAvatar,
-                    "online": friends[i].online,
+                    "online": user.online,
                 });
         }
 

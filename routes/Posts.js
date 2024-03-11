@@ -11,10 +11,10 @@ router.get("/", validateToken, getPost);
 router.get("/:id", validateToken, getPostById);
 
 //update like num
-router.post("/like/:postId", updateLikeNum);
+router.put("/like/:postId", updateLikeNum);
 
 //update like num
-router.post("/comment/:postId", updateCommentNumber);
+router.put("/comment/:postId", updateCommentNumber);
 
 // make new post
 router.post("/", validateToken, uploadMiddleware, makeNewPost);
