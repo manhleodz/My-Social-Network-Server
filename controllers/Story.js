@@ -238,6 +238,10 @@ const post = async (req, res) => {
 
             } else if (contentType.includes("video")) {
 
+                const User = await Users.findByPk(UserId, {
+                    attributes: ['id', 'nickname', 'username', 'smallAvatar']
+                });
+
                 const story = await Story.create({
                     link: downloadURL,
                     public,
@@ -245,9 +249,25 @@ const post = async (req, res) => {
                     UserId: UserId,
                     backgroundColor: 'gray',
                 });
+
                 res.status(200).json({
                     message: "Upload Successfully",
-                    data: story
+                    data: {
+                        "id": story.id,
+                        "link": story.link,
+                        "expires": story.expires,
+                        "public": story.public,
+                        "seen": `${UserId}`,
+                        "createdAt": story.createdAt,
+                        "updatedAt": story.updatedAt,
+                        "backgroundColor": 'gray',
+                        "User": {
+                            "id": UserId,
+                            "nickname": User.nickname,
+                            "username": User.username,
+                            "smallAvatar": User.smallAvatar
+                        }
+                    }
                 })
             }
         }
