@@ -275,7 +275,7 @@ const makeNewPost = async (req, res, next) => {
                 await Media.create({
                     link: downloadURL,
                     type: 2,
-                    backgroundColor: gray,
+                    backgroundColor: "gray",
                     UserId: UserId,
                     PostId: newPost.id,
                 });
@@ -350,7 +350,7 @@ const makeNewPost = async (req, res, next) => {
                         UserId: UserId,
                         PostId: newPost.id,
                         createdAt: dateTime,
-                        backgroundColor: black,
+                        backgroundColor: "black",
                         updatedAt: dateTime
                     });
                 } else {
