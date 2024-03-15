@@ -12,9 +12,13 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.TEXT,
             allowNull: true
         },
-        lastMessage: {
+        lastMessage: {                                                      // dạng `${UserId}@@split@@${message}`
             type: DataTypes.TEXT,
-            allowNull: false
+            allowNull: true
+        },
+        seen: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
         },
         public: {
             type: DataTypes.BOOLEAN,

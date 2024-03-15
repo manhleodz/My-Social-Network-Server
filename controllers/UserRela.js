@@ -9,8 +9,6 @@ const redisClient = Redis.createClient({
     }
 });
 
-const DEFAULT_EXPIRATION = 300;
-
 redisClient.connect().catch(console.error);
 
 if (!redisClient.isOpen) {
@@ -183,7 +181,7 @@ const deleteFriend = async (req, res) => {
 const isIncluded = (list, id) => {
     for (let obj of list)
         if (obj.User1 === id || obj.User2 === id)
-            return obj.id;
+            return obj;
 
     return false
 }
@@ -193,7 +191,7 @@ const getListFriend = async (req, res) => {
         const id = req.user.id;
 
         const list = await UserRela.findAll({
-            attributes: ['id', 'User1', 'User2'],
+            attributes: ['id', 'User1', 'User2', 'lastMessage', 'seen', 'updatedAt'],
             where: {
                 status: 1,
                 [Op.or]: [
@@ -225,7 +223,10 @@ const getListFriend = async (req, res) => {
             user = JSON.parse(user);
             if (including)
                 result.push({
-                    "relationshipId": including,
+                    "relationshipId": including.id,
+                    "lastMessage": including.lastMessage,
+                    "seen": including.seen,
+                    "updatedAt": including.updatedAt,
                     "id": friends[i].id,
                     "nickname": friends[i].nickname,
                     "username": friends[i].username,

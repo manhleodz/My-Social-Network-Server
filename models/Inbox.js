@@ -24,6 +24,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: true
         },
+        ChannelMembersId: {
+            type: DataTypes.INTEGER,
+            allowNull: true
+        },
         createdAt: {
             type: DataTypes.DATE,
             allowNull: false,
@@ -51,6 +55,10 @@ module.exports = (sequelize, DataTypes) => {
             as: "Receiver"
         });
         Inbox.belongsTo(models.Channels, {
+            onDelete: "cascade",
+            foreignKey: "ChannelMembersId",
+        });
+        Inbox.belongsTo(models.ChannelMembers, {
             onDelete: "cascade",
             foreignKey: "ChannelId",
         });

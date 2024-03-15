@@ -1,4 +1,4 @@
-const { Users, Inbox, Channels, ChannelMembers } = require("../models");
+const { Users, UserRela, Inbox, Channels, ChannelMembers } = require("../models");
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 
@@ -38,6 +38,7 @@ const sendConversationMessage = async (req, res) => {
 
         const data = { receiver, message, type, RelationshipId, sender };
         const newMessage = await Inbox.create(data);
+        await UserRela.update({ lastMessage: `${sender}@@split@@${message}`, updatedAt: Sequelize.fn('now') }, { where: { id: RelationshipId } });
 
         res.status(200).json({
             message: "Send successfully",
@@ -64,7 +65,7 @@ const deleteMessage = async (req, res) => {
 
         if (checker.sender == userId) {
             await Inbox.destroy({
-                id: id
+                where: { id: id }
             });
 
             res.status(200).json({
@@ -216,6 +217,37 @@ const getGroupById = async (req, res) => {
     }
 };
 
+const getGroupMessage = async (req, res) => {
+
+    try {
+
+        const ChannelId = req.params.ChannelId;
+        const userId = req.user.id;
+
+        const list = await Inbox.findAll({
+            attributes: ['id', 'sender', 'message', 'ChannelId', 'createdAt', 'updatedAt'],
+            order: [['id', 'DESC']],
+            limit: 20,
+            include: [{
+                attributes: ['username', 'nickname', 'smallAvatar'],
+                model: Users,
+                as: 'Sender'
+            }],
+            where: { ChannelId: ChannelId },
+        })
+
+        res.status(200).json({
+            message: "Lấy thành công ông ơi",
+            data: list.reverse(),
+        })
+    } catch (err) {
+        res.status(400).json({
+            message: "Lỗi server",
+            error: err.message
+        });
+    }
+};
+
 const sendGroupMessage = async (req, res) => {
     try {
 
@@ -225,7 +257,8 @@ const sendGroupMessage = async (req, res) => {
         const sender = req.user.id;
 
         const data = { message, type, ChannelId, sender };
-        const newMessage = await Inbox.create(data);
+        const newMessage = await Inbox.create(data)
+        await Channels.update({ lastMessage: `${sender}@@split@@${message}`, updatedAt: Sequelize.fn('now') }, { where: { id: ChannelId } });
 
         res.status(200).json({
             message: "Send successfully",
@@ -304,6 +337,78 @@ const changeGroupMessage = async (req, res) => {
         });
     }
 }
+
+const addUserIntoGroup = async (req, res) => {
+
+    try {
+
+        const { ListId, ChannelId } = req.body;
+
+        if (!ListId) throw new Error("Thiếu id người dùng");
+        if (!ListId.length) throw new Error("Sai định dạng danh sách người dùng");
+        if (!ChannelId) throw new Error("Thiếu thông tin id của nhóm chat");
+
+        const checker = await ChannelMembers.findAll({
+            attributes: ['id'],
+            where: {
+                ChannelId: ChannelId,
+                UserId: ListId
+            }
+        })
+
+        if (checker.length > 0) {
+            throw new Error("Người dùng đã trong nhóm chat");
+        }
+
+        if (ListId.length === 1) {
+            await ChannelMembers.create({
+                ChannelId: ChannelId,
+                role: 2,
+                UserId: ListId[0]
+            });
+
+            res.status(200).json({
+                message: "Thêm người dùng thành công",
+            });
+        } else {
+
+            const data = [];
+
+            for (let i of ListId) {
+                data.push({
+                    ChannelId: ChannelId,
+                    UserId: i,
+                    role: 2
+                })
+            }
+
+            await ChannelMembers.bulkCreate(data);
+
+            res.status(200).json({
+                message: "Thêm người dùng thành công",
+            });
+        }
+    } catch (err) {
+        res.status(400).json({
+            message: "Lỗi bé ơi",
+            error: err.message
+        });
+    }
+}
+
+const changeRoleUser = async (req, res) => {
+
+    try {
+
+        const { UserId, role, ChannelId } = req.body;
+        
+    } catch (err) {
+        res.status(400).json({
+            message: "Lỗi bé ơi",
+            error: err.message
+        });
+    }
+};
 
 const createGroup = async (req, res) => {
     try {
@@ -386,5 +491,7 @@ module.exports = {
     sendGroupMessage,
     deleteGroupMessage,
     getGroupById,
-    changeGroupMessage
+    changeGroupMessage,
+    getGroupMessage,
+    addUserIntoGroup
 }

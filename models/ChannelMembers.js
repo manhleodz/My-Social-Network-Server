@@ -41,6 +41,11 @@ module.exports = (sequelize, DataTypes) => {
             onDelete: "cascade",
             foreignKey: "ChannelId"
         });
+
+        ChannelMembers.hasMany(models.Inbox, {
+            onDelete: "cascade",
+            foreignKey: "ChannelMembersId"
+        });
     };
 
     return ChannelMembers;

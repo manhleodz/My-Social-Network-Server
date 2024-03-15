@@ -13,6 +13,14 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,                  // 1: đã là bạn
             defaultValue: 0                           // 2: chưa là bạn nhưng có thể nhắn tin
         },
+        lastMessage: {                                // dạng `${UserId}@@split@@${message}`
+            type: DataTypes.TEXT,
+            allowNull: true
+        },
+        seen: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
+        },
         createdAt: {
             type: DataTypes.DATE,
             allowNull: false,

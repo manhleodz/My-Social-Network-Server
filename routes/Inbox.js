@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { validateToken } = require('../middlewares/AuthMiddleware');
-const { deleteMessage, createGroup, deleteGroup, getConversationMessage, sendConversationMessage, changeMessage, getListGroups, sendGroupMessage, getGroupById } = require('../controllers/Inbox');
+const { deleteMessage, createGroup, deleteGroup, getConversationMessage, sendConversationMessage, changeMessage, getListGroups, sendGroupMessage, getGroupById, getGroupMessage, addUserIntoGroup } = require('../controllers/Inbox');
 
 router.get("/:RelationshipId", validateToken, getConversationMessage)
 
@@ -13,11 +13,13 @@ router.put("/:id", validateToken, changeMessage);
 
 router.get("/group/all", validateToken, getListGroups);
 
-router.get("/group/:id", validateToken, getGroupById);
+router.get("/group/:ChannelId", validateToken, getGroupMessage);
 
 router.post("/group", validateToken, sendGroupMessage);
 
 router.post("/group/newgroup", validateToken, createGroup);
+
+router.post("/group/addUser", validateToken, addUserIntoGroup);
 
 router.delete("/group/delete", validateToken, deleteGroup);
 
