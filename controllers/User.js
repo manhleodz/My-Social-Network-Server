@@ -35,30 +35,34 @@ const signup = async (req, res) => {
     try {
         const { email, password } = req.body;
 
+        if (!email || !password) throw new Error("Vui lòng nhập đầy đủ email và password");
+
+        if (password.length < 8) throw new Error("Mật khẩu có độ dài trên 7 kí tự");
+
+        if (!/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(email)) throw new Error("Vui lòng nhập đúng email");
+
         const duplication = await Users.findOne({
             where: { email: email }
         })
 
-        if (duplication == null) {
-            let id;
-            bcrypt.hash(password, 10).then(async (hash) => {
-                const newAccount = await Users.create({
-                    password: hash,
-                    email: email,
-                });
+        if (duplication) throw new Error("Email đã tồn tại");
 
-                await redisClient.SET(`account-${newAccount.id}`, JSON.stringify({online: false}));
-                id = newAccount.id;
-            }).then((e) => {
-                const accessToken = sign(
-                    { email: email, id: id },
-                    process.env.SECRET_KEY
-                )
-                res.status(200).json(accessToken);
-            })
-        } else {
-            res.status(400).json("Email đã tồn tại");
-        }
+        let id;
+        bcrypt.hash(password, 10).then(async (hash) => {
+            const newAccount = await Users.create({
+                password: hash,
+                email: email,
+            });
+
+            await redisClient.SET(`account-${newAccount.id}`, JSON.stringify({ online: false }));
+            id = newAccount.id;
+        }).then((e) => {
+            const accessToken = sign(
+                { email: email, id: id },
+                process.env.SECRET_KEY
+            )
+            res.status(200).json(accessToken);
+        })
 
     } catch (error) {
         res.status(400).json({
@@ -75,6 +79,10 @@ const makeInfo = async (req, res) => {
         data.confirm = 1;
         const username = data.username;
         const email = req.user.email.trim();
+
+        if (!username) throw new Error("Thiếu tên đăng nhập!");
+
+        if (username.length < 6) throw new Error("Tên người dùng phải có độ dài trên 6 kí tự");
 
         const duplication = await Users.findAll({
             where: {

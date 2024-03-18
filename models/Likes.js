@@ -1,6 +1,21 @@
 module.exports = (sequelize, DataTypes) => {
     const Likes = sequelize.define("Likes", {
-
+        UserId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
+        PostId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        },
+        MediaId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        },
+        ReelId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        },
         createdAt: {
             type: DataTypes.DATE,
             allowNull: false,
@@ -16,6 +31,7 @@ module.exports = (sequelize, DataTypes) => {
     Likes.associate = (models) => {
         Likes.belongsTo(models.Users, {
             onDelete: "cascade",
+            foreignKey: "UserId"
         });
 
         Likes.belongsTo(models.Posts, {

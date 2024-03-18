@@ -9,13 +9,13 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             allowNull: false,
         },
+        lastMessage: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        },
         status: {                                     // 0: chờ xác nhận
             type: DataTypes.INTEGER,                  // 1: đã là bạn
             defaultValue: 0                           // 2: chưa là bạn nhưng có thể nhắn tin
-        },
-        lastMessage: {                                // dạng `${UserId}@@split@@${message}`
-            type: DataTypes.TEXT,
-            allowNull: true
         },
         seen: {
             type: DataTypes.BOOLEAN,
@@ -34,6 +34,7 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     UserRela.associate = (models) => {
+
         UserRela.belongsTo(models.Users, {
             onDelete: "cascade",
             foreignKey: "User1",
@@ -45,6 +46,11 @@ module.exports = (sequelize, DataTypes) => {
             foreignKey: "User2",
             as: "Receiver"
         });
+
+        UserRela.hasMany(models.Inbox, {
+            onDelete: "cascade",
+            foreignKey: "RelationshipId",
+        })
     }
 
     return UserRela;

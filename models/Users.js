@@ -86,9 +86,11 @@ module.exports = (sequelize, DataTypes) => {
     Users.associate = (models) => {
         Users.hasMany(models.Likes, {
             onDelete: "cascade",
+            foreignKey: "User2",
         });
         Users.hasMany(models.Comments, {
             onDelete: "cascade",
+            foreignKey: "User2",
         });
         Users.hasMany(models.UserRela, {
             onDelete: "cascade",
@@ -97,6 +99,10 @@ module.exports = (sequelize, DataTypes) => {
         Users.hasMany(models.UserRela, {
             onDelete: "cascade",
             foreignKey: "User2",
+        })
+        Users.hasMany(models.ChannelMembers, {
+            onDelete: "cascade",
+            foreignKey: "UserId",
         })
         Users.hasMany(models.Inbox, {
             onDelete: "cascade",

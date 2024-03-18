@@ -12,14 +12,6 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.TEXT,
             allowNull: true
         },
-        lastMessage: {                                                      // dạng `${UserId}@@split@@${message}`
-            type: DataTypes.TEXT,
-            allowNull: true
-        },
-        seen: {
-            type: DataTypes.BOOLEAN,
-            defaultValue: false
-        },
         public: {
             type: DataTypes.BOOLEAN,
             allowNull: false
@@ -40,14 +32,17 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     Channels.associate = (models) => {
-        Channels.hasMany(models.Inbox, {
+        Channels.hasMany(models.InboxGroup, {
+            onDelete: "cascade",
             foreignKey: "ChannelId"
         })
 
         Channels.hasMany(models.ChannelMembers, {
+            onDelete: "cascade",
             foreignKey: "ChannelId"
         })
-    }
+
+    };
 
     return Channels;
 };

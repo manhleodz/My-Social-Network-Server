@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const { Likes, Users } = require('../models');
+const { Likes, Users, Posts } = require('../models');
 const { validateToken } = require('../middlewares/AuthMiddleware');
+const sequelize = require("sequelize");
 
 router.post("/", validateToken, async (req, res) => {
     const PostId = req.body.PostId;
@@ -12,11 +13,17 @@ router.post("/", validateToken, async (req, res) => {
     });
     if (!found) {
         await Likes.create({ PostId: PostId, UserId: UserId });
+
+        await Posts.increment('likeNumber', { by: 1, where: { id: PostId } });
+
         res.json(true);
     } else {
         await Likes.destroy({
             where: { PostId: PostId, UserId: UserId },
         });
+
+        await Posts.decrement('likeNumber', { by: 1, where: { id: PostId } });
+
         res.json(false);
     }
 });

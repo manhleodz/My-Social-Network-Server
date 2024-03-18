@@ -1,4 +1,5 @@
-const { Users, UserRela, Inbox, Channels, ChannelMembers } = require("../models");
+const { list } = require("firebase/storage");
+const { Users, UserRela, Inbox, Channels, ChannelMembers, sequelize } = require("../models");
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 
@@ -38,7 +39,11 @@ const sendConversationMessage = async (req, res) => {
 
         const data = { receiver, message, type, RelationshipId, sender };
         const newMessage = await Inbox.create(data);
-        await UserRela.update({ lastMessage: `${sender}@@split@@${message}`, updatedAt: Sequelize.fn('now') }, { where: { id: RelationshipId } });
+
+        await UserRela.update({
+            lastMessage: newMessage.id,
+            updatedAt: Sequelize.fn("now")
+        }, { where: { id: RelationshipId } });
 
         res.status(200).json({
             message: "Send successfully",
@@ -162,20 +167,32 @@ const getListGroups = async (req, res) => {
         const userId = req.user.id;
 
         const list = await Channels.findAll({
-            attributes: ['id', 'name', 'avatar', 'background', 'updatedAt', 'lastMessage'],
+            attributes: ['id', 'name', 'avatar', 'background', 'lastMessage', 'updatedAt'],
             order: [['updatedAt', 'DESC']],
             include: [{
                 model: ChannelMembers,
                 where: { UserId: userId }
-            }]
+            }],
+            order: [['lastMessage', 'DESC']]
         })
+
+        const listIdMessage = list.map(channel => { return channel.lastMessage });
+
+        const lastMessage = await Inbox.findAll({
+            where: { id: listIdMessage },
+            order: [['id', 'DESC']],
+        });
 
         if (list.length === 0) res.status(204).json("success");
 
         else {
+
             res.status(200).json({
                 message: "Successfully",
-                data: list
+                data: {
+                    channels: list,
+                    lastMessage
+                }
             })
         }
     } catch (err) {
@@ -258,7 +275,6 @@ const sendGroupMessage = async (req, res) => {
 
         const data = { message, type, ChannelId, sender };
         const newMessage = await Inbox.create(data)
-        await Channels.update({ lastMessage: `${sender}@@split@@${message}`, updatedAt: Sequelize.fn('now') }, { where: { id: ChannelId } });
 
         res.status(200).json({
             message: "Send successfully",
@@ -349,7 +365,7 @@ const addUserIntoGroup = async (req, res) => {
         if (!ChannelId) throw new Error("Thiếu thông tin id của nhóm chat");
 
         const checker = await ChannelMembers.findAll({
-            attributes: ['id'],
+            attributes: ['id', 'role'],
             where: {
                 ChannelId: ChannelId,
                 UserId: ListId
@@ -359,6 +375,8 @@ const addUserIntoGroup = async (req, res) => {
         if (checker.length > 0) {
             throw new Error("Người dùng đã trong nhóm chat");
         }
+
+        if (checker.role !== 1) throw new Error("Bạn không có quyền thêm người dùng!")
 
         if (ListId.length === 1) {
             await ChannelMembers.create({
@@ -401,7 +419,7 @@ const changeRoleUser = async (req, res) => {
     try {
 
         const { UserId, role, ChannelId } = req.body;
-        
+
     } catch (err) {
         res.status(400).json({
             message: "Lỗi bé ơi",

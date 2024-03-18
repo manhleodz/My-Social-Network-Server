@@ -1,6 +1,21 @@
 module.exports = (sequelize, DataTypes) => {
     const Shared = sequelize.define("Shared", {
-
+        UserId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
+        PostId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        },
+        MediaId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        },
+        ReelId: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        },
         createdAt: {
             type: DataTypes.DATE,
             allowNull: false,
@@ -25,6 +40,10 @@ module.exports = (sequelize, DataTypes) => {
         Shared.belongsTo(models.Media, {
             onDelete: "cascade",
             foreignKey: "MediaId"
+        });
+        Shared.belongsTo(models.Reel, {
+            onDelete: "cascade",
+            foreignKey: "ReelId"
         });
     }
 

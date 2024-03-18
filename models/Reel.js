@@ -1,12 +1,12 @@
 module.exports = (sequelize, DataTypes) => {
     const Reel = sequelize.define("Reel", {
+        UserId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
         introduction: {
             type: DataTypes.TEXT,
             allowNull: true,
-        },
-        link: {
-            type: DataTypes.TEXT,
-            allowNull: false,
         },
         public: {
             type: DataTypes.STRING,
@@ -39,6 +39,12 @@ module.exports = (sequelize, DataTypes) => {
     Reel.associate = (models) => {
         Reel.belongsTo(models.Users, {
             onDelete: "cascade",
+            foreignKey: "UserId",
+        });
+
+        Reel.hasOne(models.Media, {
+            onDelete: "cascade",
+            foreignKey: "ReelId",
         });
     };
     return Reel;

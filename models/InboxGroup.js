@@ -1,14 +1,10 @@
 module.exports = (sequelize, DataTypes) => {
-    const Inbox = sequelize.define("Inbox", {
+    const InboxGroup = sequelize.define("InboxGroup", {
         sender: {
             type: DataTypes.INTEGER,
             allowNull: false,
         },
-        receiver: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-        },
-        RelationshipId: {
+        ChannelId: {
             type: DataTypes.INTEGER,
             allowNull: false,
         },
@@ -35,29 +31,24 @@ module.exports = (sequelize, DataTypes) => {
         collate: 'utf8mb4_unicode_ci'
     });
 
-    Inbox.associate = (models) => {
-        Inbox.belongsTo(models.Users, {
+    InboxGroup.associate = (models) => {
+
+        InboxGroup.belongsTo(models.ChannelMembers, {
             onDelete: "cascade",
-            foreignKey: "sender",
-            as: "Sender"
+            foreignKey: 'sender',
         });
 
-        Inbox.belongsTo(models.Users, {
+        InboxGroup.belongsTo(models.Channels, {
             onDelete: "cascade",
-            foreignKey: "receiver",
-            as: "Receiver"
+            foreignKey: "ChannelId",
         });
 
-        Inbox.belongsTo(models.UserRela, {
-            onDelete: "cascade",
-            foreignKey: "RelationshipId",
-        });
-
-        Inbox.hasOne(models.UserRela, {
+        InboxGroup.hasOne(models.Channels, {
             onDelete: "cascade",
             foreignKey: "lastMessage",
         })
+
     };
 
-    return Inbox;
+    return InboxGroup;
 };

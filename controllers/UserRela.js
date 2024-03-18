@@ -1,5 +1,6 @@
 const { Op, where } = require("sequelize");
 const Redis = require('redis');
+const Sequelize = require('sequelize');
 
 const redisClient = Redis.createClient({
     password: process.env.REDIS_PASSWORD,
@@ -15,7 +16,7 @@ if (!redisClient.isOpen) {
     redisClient.connect().catch(console.error);
 };
 
-const { Users, UserRela } = require("../models");
+const { Users, UserRela, Inbox, sequelize } = require("../models");
 require('dotenv').config();
 
 const addFriends = async (req, res) => {
@@ -199,43 +200,62 @@ const getListFriend = async (req, res) => {
                     { User2: id }
                 ]
             },
-            order: [['id', 'DESC']],
+            include: [{
+                attributes: ['id', 'nickname', 'username', 'smallAvatar',],
+                model: Users,
+                as: "Sender"
+            }, {
+                attributes: ['id', 'nickname', 'username', 'smallAvatar',],
+                model: Users,
+                as: "Receiver"
+            }],
+            order: [['lastMessage', 'DESC']],
         });
 
-        let friendIds = list.map(fr => {
-            if (fr.User1 === id)
-                return fr.User2;
-            else
-                return fr.User1;
-        })
+        // const list = await UserRela.sequelize.query(`
+        //     SELECT 
+        //         "UserRela"."id", "UserRela"."User1", "UserRela"."User2", "UserRela"."lastMessage", "UserRela"."seen", "UserRela"."updatedAt"
+        //     FROM 
+        //         "UserRela" AS "UserRela" JOIN "Inbox" AS "lastMessage" ON "Inbox"."id" = "UserRela"."lastMessage"
+        //     WHERE
+        //         "UserRela"."status" = 1 AND ("UserRela"."User1" = ${id} OR "UserRela"."User2" = ${id})
+        //     ORDER BY "UserRela"."lastMessage" DESC
+        // `)
 
-        const friends = await Users.findAll({
-            attributes: ['id', 'nickname', 'username', 'smallAvatar',],
-            where: { id: friendIds },
-            order: [['id', 'ASC']]
-        })
+        // let friendIds = list.map(fr => {
+        //     if (fr.User1 === id)
+        //         return fr.User2;
+        //     else
+        //         return fr.User1;
+        // })
 
-        let result = [];
-        for (let i = 0; i < list.length; i++) {
+        // const friends = await Users.findAll({
+        //     attributes: ['id', 'nickname', 'username', 'smallAvatar',],
+        //     where: { id: friendIds },
+        //     order: [['id', 'ASC']]
+        // })
 
-            const including = isIncluded(list, friends[i].id);
-            let user = await redisClient.get(`account-${friends[i].id}`);
-            user = JSON.parse(user);
-            if (including)
-                result.push({
-                    "relationshipId": including.id,
-                    "lastMessage": including.lastMessage,
-                    "seen": including.seen,
-                    "updatedAt": including.updatedAt,
-                    "id": friends[i].id,
-                    "nickname": friends[i].nickname,
-                    "username": friends[i].username,
-                    "smallAvatar": friends[i].smallAvatar,
-                    "online": user.online,
-                });
-        }
+        // let result = [];
+        // for (let i = 0; i < list.length; i++) {
 
-        res.status(200).json(result);
+        //     const including = isIncluded(list, friends[i].id);
+        //     let user = await redisClient.get(`account-${friends[i].id}`);
+        //     user = JSON.parse(user);
+        //     if (including)
+        //         result.push({
+        //             "relationshipId": including.id,
+        //             "lastMessage": including.lastMessage,
+        //             "seen": including.seen,
+        //             "updatedAt": including.updatedAt,
+        //             "id": friends[i].id,
+        //             "nickname": friends[i].nickname,
+        //             "username": friends[i].username,
+        //             "smallAvatar": friends[i].smallAvatar,
+        //             "online": user.online,
+        //         });
+        // }
+
+        res.status(200).json(list);
     } catch (err) {
         res.status(400).json({
             message: "Lỗi server ông ơi",

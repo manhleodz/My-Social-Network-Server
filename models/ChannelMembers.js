@@ -1,8 +1,12 @@
 module.exports = (sequelize, DataTypes) => {
     const ChannelMembers = sequelize.define("ChannelMembers", {
+        UserId: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
         ChannelId: {
             type: DataTypes.INTEGER,
-            allowNull: false
+            allowNull: false,
         },
         nickname: {
             type: DataTypes.STRING,
@@ -10,10 +14,6 @@ module.exports = (sequelize, DataTypes) => {
         },
         role: {
             type: DataTypes.INTEGER, //# admin 1, user 2
-            allowNull: false
-        },
-        UserId: {
-            type: DataTypes.INTEGER,
             allowNull: false
         },
         createdAt: {
@@ -32,9 +32,10 @@ module.exports = (sequelize, DataTypes) => {
     });
 
     ChannelMembers.associate = (models) => {
+
         ChannelMembers.belongsTo(models.Users, {
             onDelete: "cascade",
-            foreignKey: "UserId"
+            foreignKey: "UserId",
         });
 
         ChannelMembers.belongsTo(models.Channels, {
@@ -42,10 +43,11 @@ module.exports = (sequelize, DataTypes) => {
             foreignKey: "ChannelId"
         });
 
-        ChannelMembers.hasMany(models.Inbox, {
+        ChannelMembers.hasMany(models.InboxGroup, {
             onDelete: "cascade",
-            foreignKey: "ChannelMembersId"
-        });
+            foreignKey: "sender",
+        })
+
     };
 
     return ChannelMembers;
