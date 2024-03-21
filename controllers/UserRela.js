@@ -191,97 +191,18 @@ const getListFriend = async (req, res) => {
     try {
         const id = req.user.id;
 
-        const list = await UserRela.findAll({
-            attributes: ['id', 'User1', 'User2', 'lastMessage', 'seen', 'updatedAt'],
-            where: {
-                status: 1,
-                [Op.or]: [
-                    { User1: id },
-                    { User2: id }
-                ]
-            },
-            include: [{
-                attributes: ['id', 'nickname', 'username', 'smallAvatar',],
-                model: Users,
-                as: "Sender"
-            }, {
-                attributes: ['id', 'nickname', 'username', 'smallAvatar',],
-                model: Users,
-                as: "Receiver"
-            }],
-            order: [['lastMessage', 'DESC']],
-        });
+        let list = await UserRela.sequelize.query(`
+            select  "UserRela".*, "Inbox"."message", "Inbox"."type", "Inbox"."sender"
+            from "UserRela"
+            left join "Inbox" on "lastMessage" = "Inbox"."id"
+            WHERE ("UserRela"."User1" = ${id} OR "UserRela"."User2" = ${id})
+            AND "UserRela"."status" = 1 
+            ORDER BY "UserRela"."id" DESC;
+        `)
 
-        // const list = await UserRela.sequelize.query(`
-        //     SELECT 
-        //         "UserRela"."id", "UserRela"."User1", "UserRela"."User2", "UserRela"."lastMessage", "UserRela"."seen", "UserRela"."updatedAt"
-        //     FROM 
-        //         "UserRela" AS "UserRela" JOIN "Inbox" AS "lastMessage" ON "Inbox"."id" = "UserRela"."lastMessage"
-        //     WHERE
-        //         "UserRela"."status" = 1 AND ("UserRela"."User1" = ${id} OR "UserRela"."User2" = ${id})
-        //     ORDER BY "UserRela"."lastMessage" DESC
-        // `)
+        const data = list[0];
 
-        // let friendIds = list.map(fr => {
-        //     if (fr.User1 === id)
-        //         return fr.User2;
-        //     else
-        //         return fr.User1;
-        // })
-
-        // const friends = await Users.findAll({
-        //     attributes: ['id', 'nickname', 'username', 'smallAvatar',],
-        //     where: { id: friendIds },
-        //     order: [['id', 'ASC']]
-        // })
-
-        // let result = [];
-        // for (let i = 0; i < list.length; i++) {
-
-        //     const including = isIncluded(list, friends[i].id);
-        //     let user = await redisClient.get(`account-${friends[i].id}`);
-        //     user = JSON.parse(user);
-        //     if (including)
-        //         result.push({
-        //             "relationshipId": including.id,
-        //             "lastMessage": including.lastMessage,
-        //             "seen": including.seen,
-        //             "updatedAt": including.updatedAt,
-        //             "id": friends[i].id,
-        //             "nickname": friends[i].nickname,
-        //             "username": friends[i].username,
-        //             "smallAvatar": friends[i].smallAvatar,
-        //             "online": user.online,
-        //         });
-        // }
-
-        res.status(200).json(list);
-    } catch (err) {
-        res.status(400).json({
-            message: "Lỗi server ông ơi",
-            error: err.message
-        })
-    }
-}
-
-const getNineFriends = async (req, res) => {
-    try {
-        const id = (Number)(req.query.id);
-
-        const list = await UserRela.findAll({
-            attributes: ['id', 'User1', 'User2'],
-            where: {
-                status: 1,
-                [Op.or]: [
-                    { User1: id },
-                    { User2: id }
-                ]
-            },
-            limit: 9,
-            order: [['id', 'DESC']],
-        });
-
-        let friendIds = list.map(fr => {
+        let friendIds = data.map(fr => {
             if (fr.User1 === id)
                 return fr.User2;
             else
@@ -295,25 +216,100 @@ const getNineFriends = async (req, res) => {
         })
 
         let result = [];
-        for (let i = 0; i < list.length; i++) {
+        for (let i = 0; i < data.length; i++) {
 
-            const including = isIncluded(list, friends[i].id);
+            const including = isIncluded(data, friends[i].id);
+            let user = await redisClient.get(`account-${friends[i].id}`);
+            user = JSON.parse(user);
             if (including)
                 result.push({
-                    "relationshipId": including,
+                    "relationshipId": including.id,
+                    "lastMessage": including.lastMessage,
+                    "seen": including.seen,
+                    "updatedAt": including.updatedAt,
                     "id": friends[i].id,
                     "nickname": friends[i].nickname,
                     "username": friends[i].username,
                     "smallAvatar": friends[i].smallAvatar,
-                    "online": friends[i].online,
+                    "online": user.online,
+                    "status": including.status,
+                    "sender": including.sender,
+                    "receiver": including.receiver,
+                    "message": including.message,
+                    "type": including.type
                 });
         }
 
         res.status(200).json({
-            message: "Get successfully",
+            message: "OK",
             data: result
+        });
+    } catch (err) {
+        res.status(400).json({
+            message: "Lỗi server ông ơi",
+            error: err.message
+        })
+    }
+}
+
+const getNineFriends = async (req, res) => {
+    const id = (Number)(req.query.id);
+    try {
+        const id = req.user.id;
+
+        let list = await UserRela.sequelize.query(`
+            select *
+            from "UserRela"
+            left join "Inbox" on "lastMessage" = "Inbox"."id"
+            WHERE ("UserRela"."User1" = ${id} OR "UserRela"."User2" = ${id})
+            AND "UserRela"."status" = 1
+            ORDER BY "UserRela"."id" DESC LIMIT 9 ;
+        `)
+
+        const data = list[0];
+
+        let friendIds = data.map(fr => {
+            if (fr.User1 === id)
+                return fr.User2;
+            else
+                return fr.User1;
         })
 
+        const friends = await Users.findAll({
+            attributes: ['id', 'nickname', 'username', 'smallAvatar',],
+            where: { id: friendIds },
+            order: [['id', 'ASC']]
+        })
+
+        let result = [];
+        for (let i = 0; i < data.length; i++) {
+
+            const including = isIncluded(data, friends[i].id);
+            let user = await redisClient.get(`account-${friends[i].id}`);
+            user = JSON.parse(user);
+            if (including)
+                result.push({
+                    "relationshipId": including.id,
+                    "lastMessage": including.lastMessage,
+                    "seen": including.seen,
+                    "updatedAt": including.updatedAt,
+                    "id": friends[i].id,
+                    "nickname": friends[i].nickname,
+                    "username": friends[i].username,
+                    "smallAvatar": friends[i].smallAvatar,
+                    "online": user.online,
+                    "status": including.status,
+                    "sender": including.sender,
+                    "receiver": including.receiver,
+                    "message": including.message,
+                    "type": including.type
+                });
+        }
+
+        res.status(200).json({
+            message: "OK",
+            data: result
+        });
     } catch (err) {
         res.status(400).json({
             message: "Lỗi server ông ơi",

@@ -1,5 +1,5 @@
 const { list } = require("firebase/storage");
-const { Users, UserRela, Inbox, Channels, ChannelMembers, sequelize } = require("../models");
+const { Users, UserRela, Inbox, Channels, ChannelMembers, InboxGroup } = require("../models");
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 
@@ -166,33 +166,32 @@ const getListGroups = async (req, res) => {
 
         const userId = req.user.id;
 
-        const list = await Channels.findAll({
-            attributes: ['id', 'name', 'avatar', 'background', 'lastMessage', 'updatedAt'],
-            order: [['updatedAt', 'DESC']],
+        const data = await Channels.findAll({
+            attributes: ['id', 'name', 'avatar', 'background', 'createdAt', 'lastMessage', 'updatedAt'],
             include: [{
+                model: InboxGroup,
+                required: false,
+                where: Sequelize.literal(`"InboxGroups"."id" =  "Channels"."lastMessage"`),
+                attributes: ['message', 'type', 'sender'],
+                include: [{
+                    model: ChannelMembers,
+                    required: false,
+                    attributes: ['nickname']
+                }]
+            }, {
                 model: ChannelMembers,
+                attributes: ["id", "nickname", "role"],
                 where: { UserId: userId }
-            }],
-            order: [['lastMessage', 'DESC']]
+            }]
         })
 
-        const listIdMessage = list.map(channel => { return channel.lastMessage });
-
-        const lastMessage = await Inbox.findAll({
-            where: { id: listIdMessage },
-            order: [['id', 'DESC']],
-        });
-
-        if (list.length === 0) res.status(204).json("success");
+        if (data.length === 0) res.status(204).json("success");
 
         else {
 
             res.status(200).json({
                 message: "Successfully",
-                data: {
-                    channels: list,
-                    lastMessage
-                }
+                data: data
             })
         }
     } catch (err) {
@@ -213,7 +212,7 @@ const getGroupById = async (req, res) => {
         const result = await Channels.findByPk(id, {
             attributes: ['id', 'name', 'avatar', 'background', 'updatedAt', 'lastMessage'],
             include: [{
-                model: Inbox,
+                model: InboxGroup,
                 where: { ChannelId: id }
             }]
         })
@@ -241,14 +240,26 @@ const getGroupMessage = async (req, res) => {
         const ChannelId = req.params.ChannelId;
         const userId = req.user.id;
 
-        const list = await Inbox.findAll({
+        const checker = await ChannelMembers.findOne({
+            where: {
+                ChannelId: ChannelId,
+                UserId: userId
+            }
+        });
+
+        if (!checker) throw new Error("Bạn không có quyền truy cập nhóm chat này!");
+
+        const list = await InboxGroup.findAll({
             attributes: ['id', 'sender', 'message', 'ChannelId', 'createdAt', 'updatedAt'],
             order: [['id', 'DESC']],
             limit: 20,
             include: [{
-                attributes: ['username', 'nickname', 'smallAvatar'],
-                model: Users,
-                as: 'Sender'
+                attributes: ['nickname', 'UserId', 'role'],
+                model: ChannelMembers,
+                include: [{
+                    model: Users,
+                    attributes: ['username', 'smallAvatar']
+                }]
             }],
             where: { ChannelId: ChannelId },
         })
@@ -271,10 +282,23 @@ const sendGroupMessage = async (req, res) => {
         const { message, type, ChannelId } = req.body;
 
         if (!message || !type || !ChannelId) throw new Error("Cannot send group message");
-        const sender = req.user.id;
+        const userId = req.user.id;
 
-        const data = { message, type, ChannelId, sender };
-        const newMessage = await Inbox.create(data)
+        const checker = await ChannelMembers.findOne({
+            attributes: ['id'],
+            where: { UserId: userId, ChannelId: ChannelId }
+        })
+
+        if (!checker) throw new Error("Bạn không phải thành viên của nhóm chat này");
+
+        const data = { message, type, ChannelId, sender: checker.id };
+
+        const newMessage = await InboxGroup.create(data)
+
+        await Channels.update({
+            lastMessage: newMessage.id,
+            updatedAt: Sequelize.fn("now")
+        }, { where: { id: ChannelId } })
 
         res.status(200).json({
             message: "Send successfully",
@@ -295,12 +319,12 @@ const deleteGroupMessage = async (req, res) => {
         const id = req.params.id;
         const userId = req.user.id;
 
-        const checker = await Inbox.findByPk(id, {
+        const checker = await InboxGroup.findByPk(id, {
             attributes: ['sender']
         });
 
         if (checker.sender == userId) {
-            await Inbox.destroy({
+            await InboxGroup.destroy({
                 id: id
             });
 
@@ -328,12 +352,12 @@ const changeGroupMessage = async (req, res) => {
         const userId = req.user.id;
         const { message } = req.body;
 
-        const checker = await Inbox.findByPk(id, {
+        const checker = await InboxGroup.findByPk(id, {
             attributes: ['sender']
         });
 
         if (checker.sender == userId) {
-            await Inbox.update({
+            await InboxGroup.update({
                 message: message,
                 updatedAt: Sequelize.fn("now")
             }, { where: { id: id } });

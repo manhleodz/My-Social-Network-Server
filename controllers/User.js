@@ -102,6 +102,7 @@ const makeInfo = async (req, res) => {
                 res.status(200).json({
                     message: "Successfull",
                     token: accessToken,
+                    username: username,
                     email: duplication.email,
                     confirm: duplication.confirm,
                     avatar: duplication.avatar,
@@ -262,11 +263,12 @@ const login = async (req, res) => {
                             smallAvatar: user.smallAvatar,
                             email: user.email,
                             id: user.id,
-                            nickname: user.nickname
+                            nickname: user.nickname,
+                            username: user.username
                         });
                     }
                 }
-            }).catch((e) => res.status(400).json("Lỗi input"))
+            }).catch(() => res.status(400).json("Lỗi input"))
     } catch (err) {
         res.status(400).json({
             message: "error",

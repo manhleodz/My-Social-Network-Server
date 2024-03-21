@@ -256,7 +256,9 @@ const result = async (req, res) => {
             let result = await redisClient.get(`search=${search}&page=${page}`);
 
             if (result && result.length > 0) {
+
                 const data = JSON.parse(result);
+
                 res.status(200).json({
                     search,
                     page: (Number)(page),
@@ -285,54 +287,34 @@ const result = async (req, res) => {
                         replacements: { searchValue: `%${search}%` },
                         order: [['updatedAt', 'DESC']],
                         include: [{
-                            attributes: ['username', 'nickname', 'smallAvatar'],
-                            model: Users
+                            attributes: ['UserId'],
+                            where: { UserId: userId },
+                            model: Likes,
+                            required: false,
+                        }, {
+                            attributes: ['username', 'nickname', 'smallAvatar',],
+                            model: Users,
                         }, {
                             attributes: ['link', 'id', 'type', 'backgroundColor'],
-                            model: Media
+                            model: Media,
                         }],
-                        offset: page * 5,
-                        limit: 5,
+                        offset: page * 4,
+                        limit: 4,
                     })
 
-                    const ids = await result.map((post) => { return post.id });
-                    const likes = await Likes.findAll({
-                        attributes: ['PostId'],
-                        where: {
-                            PostId: ids,
-                            UserId: userId
-                        }
-                    });
-
-                    for (let i = 0; i < result.length; i++) {
-                        if (likes.find(like => like.PostId === result[i].id)) {
-                            result[i]['isLiked'] = true;
-                        } else {
-                            result[i]['isLiked'] = false;
-                        }
-                    }
-
-                    var data = [];
-                    for (let i = 0; i < result.length; i++) {
-                        data.push({
-                            Post: result[i],
-                            isLiked: result[i].isLiked
-                        })
-                    }
-
-                    if (data.length > 0) {
+                    if (result.length > 0) {
                         await redisClient.SETEX(`search=${search}&page=${page}`, DEFAULT_EXPIRATION, JSON.stringify(data));
 
                         res.status(200).json({
                             search,
                             page: (Number)(page),
-                            data
+                            data: result
                         });
                     } else {
                         res.status(204).json("There are no search results");
                     }
                 } else {
-                    result = await Posts.findAll({
+                    const data = await Posts.findAll({
                         where: Sequelize.literal(`lower(unaccent("postText")) ILIKE lower(unaccent(:searchValue))`),
                         replacements: { searchValue: `%${search}%` },
                         order: [['updatedAt', 'DESC']],
@@ -342,42 +324,23 @@ const result = async (req, res) => {
                         }, {
                             attributes: ['link', 'id', 'type', 'backgroundColor'],
                             model: Media
+                        }, {
+                            attributes: ['UserId'],
+                            where: { UserId: userId },
+                            model: Likes,
+                            required: false,
                         }],
                         offset: page * 5,
                         limit: 5,
                     })
 
-                    const ids = await result.map((post) => { return post.id });
-                    const likes = await Likes.findAll({
-                        attributes: ['PostId'],
-                        where: {
-                            PostId: ids,
-                            UserId: userId
-                        }
-                    });
-
-                    for (let i = 0; i < result.length; i++) {
-                        if (likes.find(like => like.PostId === result[i].id)) {
-                            result[i]['isLiked'] = true;
-                        } else {
-                            result[i]['isLiked'] = false;
-                        }
-                    }
-
-                    var data = [];
-                    for (let i = 0; i < result.length; i++) {
-                        data.push({
-                            Post: result[i],
-                            isLiked: result[i].isLiked
-                        })
-                    }
-                    if (data.length > 0) {
+                    if (result.length > 0) {
                         await redisClient.SETEX(`search=${search}&page=${page}`, DEFAULT_EXPIRATION, JSON.stringify(data));
 
                         res.status(200).json({
                             search,
                             page: (Number)(page) + 1,
-                            data
+                            data: result
                         });
 
                     } else {

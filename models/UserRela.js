@@ -51,6 +51,7 @@ module.exports = (sequelize, DataTypes) => {
             onDelete: "cascade",
             foreignKey: "RelationshipId",
         })
+
     }
 
     return UserRela;

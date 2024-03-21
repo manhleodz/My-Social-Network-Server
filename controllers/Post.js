@@ -16,54 +16,26 @@ const getPost = async (req, res, next) => {
             where: { public: true },
             order: [['updatedAt', 'DESC']],
             include: [{
+                attributes: ['UserId'],
+                where: { UserId: userId },
+                model: Likes,
+                required: false,
+            }, {
                 attributes: ['username', 'nickname', 'smallAvatar',],
-                model: Users
+                model: Users,
             }, {
                 attributes: ['link', 'id', 'type', 'backgroundColor'],
-                model: Media
+                model: Media,
             }],
             offset: page * 4,
             limit: 4,
         });
 
-        if (listOfPosts.length == 0) {
-            res.status(204).json({
-                message: 'There are no posts',
-            });
-        } else {
-            const ids = await listOfPosts.map((post) => { return post.id });
-            const likes = await Likes.findAll({
-                attributes: ['PostId'],
-                where: {
-                    PostId: ids,
-                    UserId: userId
-                }
-            });
-
-            for (let i = 0; i < listOfPosts.length; i++) {
-                if (likes.find(like => like.PostId === listOfPosts[i].id)) {
-                    listOfPosts[i]['isLiked'] = true;
-                } else {
-                    listOfPosts[i]['isLiked'] = false;
-                }
-            }
-
-            var result = [];
-            for (let i = 0; i < listOfPosts.length; i++) {
-                result.push({
-                    Post: listOfPosts[i],
-                    isLiked: listOfPosts[i].isLiked
-                })
-            }
-
-
-            res.status(200).json({
-                message: 'Get posts successfully',
-                currentPage: page,
-                data: result
-            });
-
-        }
+        res.status(200).json({
+            message: 'Get posts successfully',
+            currentPage: page,
+            data: listOfPosts
+        });
     } catch (err) {
         res.status(400).json({
             message: "Lỗi server",
@@ -89,19 +61,13 @@ const getPostById = async (req, res, next) => {
             }, {
                 attributes: ['link', 'id', 'type', 'backgroundColor'],
                 model: Media
+            }, {
+                attributes: ['UserId'],
+                where: { UserId: userId },
+                model: Likes,
+                required: false,
             }],
         });
-
-        const isLiked = await Likes.findOne({
-            attributes: ['PostId'],
-            where: {
-                PostId: id,
-                UserId: userId
-            }
-        });
-
-        if (isLiked) post.isLiked = true;
-        else post.isLiked = false;
 
         res.status(200).json({
             message: 'Get post successfully',
@@ -121,60 +87,58 @@ const getPostByUser = async (req, res, next) => {
         const userId2 = req.user.id;
         const page = (Number)(req.query.page);
 
-        let public = !(userId1 === userId2);
-
-        var listOfPosts = await Posts.findAll({
-            where: { UserId: userId1, public: true },
-            order: [['id', 'DESC']],
-            include: [{
-                attributes: ['username', 'nickname', 'smallAvatar',],
-                model: Users
-            }, {
-                attributes: ['link', 'id', 'type', 'backgroundColor'],
-                model: Media
-            }],
-            offset: page * 4,
-            limit: 4,
-        });
-
-        if (listOfPosts.length == 0) {
-            res.status(204).json({
-                message: 'There are no posts',
+        if (userId1 === userId2) {
+            const listOfPosts = await Posts.findAll({
+                where: { UserId: userId1 },
+                order: [['id', 'DESC']],
+                include: [{
+                    attributes: ['username', 'nickname', 'smallAvatar',],
+                    model: Users
+                }, {
+                    attributes: ['link', 'id', 'type', 'backgroundColor'],
+                    model: Media
+                }, {
+                    attributes: ['UserId'],
+                    where: { UserId: userId2 },
+                    model: Likes,
+                    required: false,
+                }],
+                offset: page * 4,
+                limit: 4,
             });
-        } else {
-            const ids = await listOfPosts.map((post) => { return post.id });
-            const likes = await Likes.findAll({
-                attributes: ['PostId'],
-                where: {
-                    PostId: ids,
-                    UserId: userId2
-                }
-            });
-
-            for (let i = 0; i < listOfPosts.length; i++) {
-                if (likes.find(like => like.PostId === listOfPosts[i].id)) {
-                    listOfPosts[i]['isLiked'] = true;
-                } else {
-                    listOfPosts[i]['isLiked'] = false;
-                }
-            }
-
-            var result = [];
-            for (let i = 0; i < listOfPosts.length; i++) {
-                result.push({
-                    Post: listOfPosts[i],
-                    isLiked: listOfPosts[i].isLiked
-                })
-            }
-
 
             res.status(200).json({
                 message: 'Get posts successfully',
                 currentPage: page,
-                data: result
+                data: listOfPosts
+            });
+        } else {
+            const listOfPosts = await Posts.findAll({
+                where: { UserId: userId1, public: true },
+                order: [['id', 'DESC']],
+                include: [{
+                    attributes: ['username', 'nickname', 'smallAvatar',],
+                    model: Users
+                }, {
+                    attributes: ['link', 'id', 'type', 'backgroundColor'],
+                    model: Media
+                }, {
+                    attributes: ['UserId'],
+                    where: { UserId: userId2 },
+                    model: Likes,
+                    required: false,
+                }],
+                offset: page * 4,
+                limit: 4,
             });
 
+            res.status(200).json({
+                message: 'Get posts successfully',
+                currentPage: page,
+                data: listOfPosts
+            });
         }
+
     } catch (err) {
         res.status(400).json({
             message: "Lỗi server",

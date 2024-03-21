@@ -5,7 +5,6 @@ const uuid = require('uuid');
 const sharp = require('sharp');
 const { auth } = require('../config/firebase.config');
 
-
 const getAll = async (req, res, next) => {
 
     try {

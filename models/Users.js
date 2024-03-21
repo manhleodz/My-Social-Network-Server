@@ -39,7 +39,7 @@ module.exports = (sequelize, DataTypes) => {
         },
         background: {
             type: DataTypes.TEXT,
-            defaultValue: "https://firebasestorage.googleapis.com/v0/b/my-social-network-815dc.appspot.com/o/posts%2F190057688_349127073238727_3602714994290916530_n.jpg_2024-2-16%2018%3A1%3A32_50271d1e-254e-404e-982e-aee86f243293?alt=media&token=bdca74f4-4c2a-4e83-aac7-625d64dffd27"
+            defaultValue: "https://firebasestorage.googleapis.com/v0/b/ml-social-network-662b2.appspot.com/o/posts%2F190057688_349127073238727_3602714994290916530_n.jpg_2024-3-20%2014%3A3%3A44_8dbd8409-8f87-4533-9009-e1ce05fc060d?alt=media&token=e2ee76bf-3fcd-430b-8fe9-1c09987a86f4"
         },
         backgroundColor: {
             type: DataTypes.STRING,

@@ -7,12 +7,12 @@ module.exports = {
     "database": process.env.DB_DATABASE,
     "host": process.env.DB_HOST,
     "port": process.env.DB_PORT,
-    "dialect": "postgres",
-    "timezone": "+7:00",
-    "define": {
-      "freezeTableName": true,
-      timestamps: false,
-    }
+    "dialect": "mysql",
+    // "timezone": "+7:00",
+    // "define": {
+    //   "freezeTableName": true,
+    //   timestamps: false,
+    // }
   },
   "test": {
     "username": "root",
