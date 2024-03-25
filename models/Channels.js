@@ -25,7 +25,11 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.DATE,
             allowNull: false,
             defaultValue: sequelize.fn('now'),
-        }
+        },
+        lastMessage: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        },
     }, {
         charset: 'utf8mb4',
         collate: 'utf8mb4_unicode_ci'

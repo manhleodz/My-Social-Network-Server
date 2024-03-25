@@ -43,11 +43,6 @@ module.exports = (sequelize, DataTypes) => {
             foreignKey: "ChannelId",
         });
 
-        InboxGroup.hasOne(models.Channels, {
-            onDelete: "cascade",
-            foreignKey: "lastMessage",
-        })
-
     };
 
     return InboxGroup;

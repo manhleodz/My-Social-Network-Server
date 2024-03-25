@@ -38,6 +38,12 @@ module.exports = (sequelize, DataTypes) => {
     }, {
         charset: 'utf8mb4',
         collate: 'utf8mb4_unicode_ci'
+    }, {
+
+    }, {
+        deletedAt: 'deletedAt',
+        paranoid: true,
+        timestamps: true
     });
 
     Posts.associate = (models) => {
@@ -71,7 +77,7 @@ module.exports = (sequelize, DataTypes) => {
             onDelete: "cascade",
             foreignKey: "UserId",
         })
-    };
+    }
 
     return Posts;
 };

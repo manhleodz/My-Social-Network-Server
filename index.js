@@ -72,6 +72,8 @@ app.use("/api/images", imageRouter);
 const searchRouter = require("./routes/Search");
 app.use("/api/search", searchRouter);
 
+const notificationRouter = require("./routes/Notifications");
+app.use("/api/notification", notificationRouter);
 
 io.on("connection", (socket) => {
 

@@ -223,7 +223,7 @@ const getListFriend = async (req, res) => {
             user = JSON.parse(user);
             if (including)
                 result.push({
-                    "relationshipId": including.id,
+                    "RelationshipId": including.id,
                     "lastMessage": including.lastMessage,
                     "seen": including.seen,
                     "updatedAt": including.updatedAt,

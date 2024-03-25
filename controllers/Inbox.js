@@ -29,6 +29,24 @@ const getConversationMessage = async (req, res) => {
     }
 }
 
+const seenMessage = async (req, res) => {
+    try {
+
+        const idx = (req.params.RelationshipId);
+
+        await UserRela.update({
+            seen: true,
+        }, { where: { id: idx } })
+
+        res.status(200).json("Succes")
+    } catch (err) {
+        res.status(400).json({
+            message: "Lỗi server",
+            error: err.message
+        });
+    }
+};
+
 const sendConversationMessage = async (req, res) => {
     try {
 
@@ -42,6 +60,7 @@ const sendConversationMessage = async (req, res) => {
 
         await UserRela.update({
             lastMessage: newMessage.id,
+            seen: false,
             updatedAt: Sequelize.fn("now")
         }, { where: { id: RelationshipId } });
 
@@ -535,5 +554,6 @@ module.exports = {
     getGroupById,
     changeGroupMessage,
     getGroupMessage,
+    seenMessage,
     addUserIntoGroup
 }

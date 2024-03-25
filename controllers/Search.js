@@ -303,7 +303,7 @@ const result = async (req, res) => {
                     })
 
                     if (result.length > 0) {
-                        await redisClient.SETEX(`search=${search}&page=${page}`, DEFAULT_EXPIRATION, JSON.stringify(data));
+                        await redisClient.SETEX(`search=${search}&page=${page}`, DEFAULT_EXPIRATION, JSON.stringify(result));
 
                         res.status(200).json({
                             search,
@@ -314,7 +314,7 @@ const result = async (req, res) => {
                         res.status(204).json("There are no search results");
                     }
                 } else {
-                    const data = await Posts.findAll({
+                    result = await Posts.findAll({
                         where: Sequelize.literal(`lower(unaccent("postText")) ILIKE lower(unaccent(:searchValue))`),
                         replacements: { searchValue: `%${search}%` },
                         order: [['updatedAt', 'DESC']],
@@ -335,7 +335,7 @@ const result = async (req, res) => {
                     })
 
                     if (result.length > 0) {
-                        await redisClient.SETEX(`search=${search}&page=${page}`, DEFAULT_EXPIRATION, JSON.stringify(data));
+                        await redisClient.SETEX(`search=${search}&page=${page}`, DEFAULT_EXPIRATION, JSON.stringify(result));
 
                         res.status(200).json({
                             search,

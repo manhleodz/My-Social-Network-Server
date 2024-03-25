@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { validateToken } = require('../middlewares/AuthMiddleware');
-const { deleteMessage, createGroup, deleteGroup, getConversationMessage, sendConversationMessage, changeMessage, getListGroups, sendGroupMessage, getGroupById, getGroupMessage, addUserIntoGroup } = require('../controllers/Inbox');
+const { deleteMessage, createGroup, deleteGroup, getConversationMessage, sendConversationMessage, changeMessage, getListGroups, sendGroupMessage, getGroupById, getGroupMessage, addUserIntoGroup, seenMessage } = require('../controllers/Inbox');
 
 router.get("/:RelationshipId", validateToken, getConversationMessage)
 
@@ -10,6 +10,8 @@ router.post("/", validateToken, sendConversationMessage);
 router.delete("/:id", validateToken, deleteMessage);
 
 router.put("/:id", validateToken, changeMessage);
+
+router.put("/seen/:RelationshipId", validateToken, seenMessage);
 
 router.get("/group/all", validateToken, getListGroups);
 

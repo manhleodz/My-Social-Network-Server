@@ -24,6 +24,8 @@ router.put("/name/:id", validateToken, async (req, res) => {
     try {
         const id = req.params.id;
         const user = await Users.findByPk(id);
+
+        if (user.id != id) throw new Error("You dont have permission")
         const username = await user.update({ username: req.body.username });
         res.status.json(username);
     } catch (err) {

@@ -1,23 +1,23 @@
 module.exports = (sequelize, DataTypes) => {
-    const Inbox = sequelize.define("Inbox", {
+    const Notifications = sequelize.define("Notifications", {
         sender: {
             type: DataTypes.INTEGER,
-            allowNull: false,
+            allowNull: true,
         },
         receiver: {
             type: DataTypes.INTEGER,
-            allowNull: false,
-        },
-        RelationshipId: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
+            allowNull: true,
         },
         message: {
             type: DataTypes.TEXT,
             allowNull: false
         },
+        seen: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
+        },
         type: {
-            type: DataTypes.STRING(20),   // text, image, video, mp4, gif
+            type: DataTypes.STRING(20),   // friend, post, account
             allowNull: false,
         },
         createdAt: {
@@ -35,25 +35,21 @@ module.exports = (sequelize, DataTypes) => {
         collate: 'utf8mb4_unicode_ci'
     });
 
-    Inbox.associate = (models) => {
-        Inbox.belongsTo(models.Users, {
+    Notifications.associate = (models) => {
+
+        Notifications.belongsTo(models.Users, {
             onDelete: "cascade",
             foreignKey: "sender",
             as: "Sender"
         });
 
-        Inbox.belongsTo(models.Users, {
+        Notifications.belongsTo(models.Users, {
             onDelete: "cascade",
             foreignKey: "receiver",
             as: "Receiver"
         });
 
-        Inbox.belongsTo(models.UserRela, {
-            onDelete: "cascade",
-            foreignKey: "RelationshipId",
-        });
-
     };
 
-    return Inbox;
+    return Notifications;
 };
