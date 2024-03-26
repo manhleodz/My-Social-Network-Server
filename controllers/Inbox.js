@@ -400,15 +400,28 @@ const changeGroupMessage = async (req, res) => {
 const addUserIntoGroup = async (req, res) => {
 
     try {
+        const userId = req.user.id;
+        const { ListUser, ChannelId } = req.body;
 
-        const { ListId, ChannelId } = req.body;
+        if (!ListUser) throw new Error("Thiếu danh sách người dùng");
 
-        if (!ListId) throw new Error("Thiếu id người dùng");
-        if (!ListId.length) throw new Error("Sai định dạng danh sách người dùng");
         if (!ChannelId) throw new Error("Thiếu thông tin id của nhóm chat");
 
-        const checker = await ChannelMembers.findAll({
+        const checkRole = await ChannelMembers.findOne({
             attributes: ['id', 'role'],
+            where: { UserId: userId }
+        })
+
+        if (!checkRole) throw new Error("Thành viên nhóm không tồn tại");
+
+        if (checkRole.role !== 1) throw new Error("Bạn không có quyền thêm người dùng!")
+
+        let ListId = [];
+        for (let e of ListUser) {
+            ListId.push(e.id);
+        }
+
+        const checker = await ChannelMembers.findAll({
             where: {
                 ChannelId: ChannelId,
                 UserId: ListId
@@ -419,13 +432,12 @@ const addUserIntoGroup = async (req, res) => {
             throw new Error("Người dùng đã trong nhóm chat");
         }
 
-        if (checker.role !== 1) throw new Error("Bạn không có quyền thêm người dùng!")
-
         if (ListId.length === 1) {
             await ChannelMembers.create({
                 ChannelId: ChannelId,
                 role: 2,
-                UserId: ListId[0]
+                UserId: ListId[0],
+                nickname: ListUser[0].nickname
             });
 
             res.status(200).json({
@@ -435,11 +447,12 @@ const addUserIntoGroup = async (req, res) => {
 
             const data = [];
 
-            for (let i of ListId) {
+            for (let i of ListUser) {
                 data.push({
                     ChannelId: ChannelId,
-                    UserId: i,
-                    role: 2
+                    UserId: i.id,
+                    role: 2,
+                    nickname: i.nickname
                 })
             }
 
@@ -474,8 +487,10 @@ const changeRoleUser = async (req, res) => {
 const createGroup = async (req, res) => {
     try {
 
-        const { name, avatar, public } = req.body;
+        const { name, avatar, public, nickname } = req.body;
         const userId = req.user.id;
+
+        if (!nickname) throw new Error("Thiếu tên người tạo kênh chat");
 
         if (!name) throw new Error("Thiếu tên kênh chat!");
 
@@ -483,23 +498,36 @@ const createGroup = async (req, res) => {
 
         if (!avatar) throw new Error("Thiếu ảnh đại diện của kênh chat!");
 
-        await Channels.create({
+        const newChannel = await Channels.create({
             name,
             public,
             avatar
+        })
+
+        await ChannelMembers.create({
+            ChannelId: newChannel.id,
+            role: 1,
+            UserId: userId,
+            nickname: nickname
         }).then(async (result) => {
-            const member = await ChannelMembers.create({
-                ChannelId: result.id,
-                role: 1,
-                UserId: userId,
-            });
+
+            let channel = newChannel;
+            channel = {
+                ...channel,
+                "ChannelMembers": [result]
+            }
 
             res.status(200).json({
                 message: "Created successfully!",
-                channel: result,
-                member: member
+                data: {
+                    ...channel["dataValues"],
+                    ChannelMembers: channel["ChannelMembers"]
+                }
             });
-        }).catch((err) => {
+        }).catch(async (err) => {
+            await Channels.destroy({
+                where: { id: newChannel.id }
+            })
             throw new Error(err.message);
         });
 
