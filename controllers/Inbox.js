@@ -409,7 +409,7 @@ const addUserIntoGroup = async (req, res) => {
 
         const checkRole = await ChannelMembers.findOne({
             attributes: ['id', 'role'],
-            where: { UserId: userId }
+            where: { UserId: userId, ChannelId: ChannelId }
         })
 
         if (!checkRole) throw new Error("Thành viên nhóm không tồn tại");
@@ -460,6 +460,7 @@ const addUserIntoGroup = async (req, res) => {
 
             res.status(200).json({
                 message: "Thêm người dùng thành công",
+                data: checkRole
             });
         }
     } catch (err) {

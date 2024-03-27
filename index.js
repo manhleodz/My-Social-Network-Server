@@ -4,8 +4,30 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const bodyParser = require('body-parser');
 const app = express();
-var http = require('http').createServer(app);
-var io = require('socket.io')(http);
+const Redis = require('redis');
+
+const redisClient = Redis.createClient({
+  password: process.env.REDIS_PASSWORD,
+  socket: {
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT
+  }
+});
+
+redisClient.connect().catch(console.error);
+
+if (!redisClient.isOpen) {
+  redisClient.connect().catch(console.error);
+};
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server, {
+  cors: {
+    origin: ["http://localhost:3040", "https://my-social-network-umber.vercel.app"],
+    methods: ["GET", "POST"],
+  },
+});
 
 const port = process.env.PORT;
 
@@ -27,6 +49,7 @@ app.set('trust proxy', (ip) => {
   else return false
 })
 
+app.use(express.static('public'));
 app.use(express.json());
 app.use(cors());
 app.use(bodyParser.json());
@@ -78,12 +101,42 @@ app.use("/api/notification", notificationRouter);
 io.on("connection", (socket) => {
 
   socket.on('online', async (user) => {
-    io.sockets.emit('joined', reply);
+    console.log(user.nickname + " is online");
+    socket.join(user.id);
+    io.sockets.emit("connected", user.id);
+    let user1 = await redisClient.get(`account-${user.id}`);
+
+    if (user1) {
+      await redisClient.del(`account-${user.id}`);
+      await redisClient.SET(`account-${user.id}`, JSON.stringify({ online: true }));
+    }
+
+    socket.on("disconnect", async () => {
+      console.log(user.nickname + " is offline");
+      socket.leave(user.id);
+      io.sockets.emit('disconnected', user.id);
+      let user2 = await redisClient.get(`account-${user.id}`);
+
+      if (user2) {
+        await redisClient.del(`account-${user.id}`);
+        await redisClient.SET(`account-${user.id}`, JSON.stringify({ online: false }));
+      }
+    });
+
+  });
+
+  socket.on("notification", async (data) => {
+    io.sockets.to(data.receiver).emit("notification", data);
+  });
+
+  socket.on("delete_message", async (data) => {
+    // io.sockets.to(data.receiver).emit("delete_message_receiver", data);
+    io.sockets.to(data.room).emit("delete_message_receiver", data);
   });
 
   socket.on("join_room", (data) => {
+    console.log(data);
     socket.join(data);
-    console.log(`User with ID: ${socket.id} joined room: ${JSON.stringify(data)}`);
   });
 
   socket.on("typing", (data) => {
@@ -94,21 +147,24 @@ io.on("connection", (socket) => {
   });
 
   socket.on("send_message", (data) => {
-    socket.to(data.room).emit("receive_message", data);
-    console.log(data);
+    if (data.receiver) {
+      socket.to(data.receiver).emit(`receiver`, data);
+    }
+    console.log(data.sender + " send message " + data.receiver + " in room " + data.room);
+    socket.in(data.room).emit("receive_message", data);
   });
 
-  socket.on("disconnect", async (userId) => {
-    io.sockets.emit('joined', []);
-  });
-
-  socket.off("setup", () => {
-    console.log("USER DISCONNECTED");
-  });
 });
 
-db.sequelize.sync().then(() => {
-  app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`);
-  });
-});
+// Database synchronization (optional)
+(async () => {
+  try {
+    await db.sequelize.sync();
+
+    server.listen(port, () => {
+      console.log('Server listening on port:', port);
+    });
+  } catch (error) {
+    console.error('Error synchronizing database:', error);
+  }
+})();
